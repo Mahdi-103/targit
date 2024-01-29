@@ -38,7 +38,7 @@ int init(){
     if(mkdir(".targit", 0755) != 0) return 1;
     FILE *f=fopen(".targit/config", "w");
     f=fopen(".targit/staged", "w");
-    f=fopen(".targit/commits", "w");
+    if(mkdir(".targit/commits", 0755) != 0) return 1;
     printf("The repo initialized successfully\n");
     return 0;
 }
