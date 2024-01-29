@@ -1,9 +1,9 @@
-#include<stdio.h>
-#include<dirent.h>
-#include<unistd.h>
-#include<sys/stat.h>
-#include<stdbool.h>
-#include<string.h>
+#include <stdio.h>
+#include <dirent.h>
+#include <unistd.h>
+#include <sys/stat.h>
+#include <stdbool.h>
+#include <string.h>
 
 int is_inited(){
     char adr[1000], tmp_adr[1000];
@@ -14,7 +14,6 @@ int is_inited(){
         dir=opendir(".");
         bool exist=false;
         while((entry=readdir(dir)) != 0){
-            printf("\t%s\n", entry->d_name);
             if(entry->d_type==4 && strcmp(entry->d_name, ".targit") == 0){
                 exist=true;
                 return 1;
@@ -22,7 +21,6 @@ int is_inited(){
         }
         closedir(dir);
         if(getcwd(tmp_adr, 1000) == NULL) return 1;
-        printf("fuck :: %s\n", tmp_adr);
         if(strcmp(tmp_adr, "/") == 0) break;
         chdir("..");
     }
@@ -41,8 +39,4 @@ int init(){
     if(mkdir(".targit/commits", 0755) != 0) return 1;
     printf("The repo initialized successfully\n");
     return 0;
-}
-
-int main(){
-    init();
 }
