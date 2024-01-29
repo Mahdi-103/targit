@@ -21,11 +21,18 @@ void upd_conf(char *dir_adr, char *usr, char *eml){
     char conf[MAX_ADR_NAME];
     memcpy(conf, dir_adr, strlen(dir_adr));
     memcpy(conf+strlen(dir_adr), "/config", 8);
-    printf("khor :: %s\n", conf);
     FILE *f=fopen(conf, "r");
     char pre_usr[MAX_NME_LNG], pre_eml[MAX_NME_LNG];
-    fgets(pre_usr, MAX_NME_LNG, f);
-    fgets(pre_eml, MAX_NME_LNG, f);
+    fgets(pre_usr, MAX_NME_LNG, f);{
+        int sz=strlen(pre_usr);
+        if(pre_usr[sz-1]=='\n')
+            pre_usr[sz-1]='\0';
+    }
+    fgets(pre_eml, MAX_NME_LNG, f);{
+        int sz=strlen(pre_eml);
+        if(pre_eml[sz-1]=='\n')
+            pre_eml[sz-1]='\0';
+    }
     fclose(f);
     if(strlen(usr) == 0) usr=pre_usr;
     if(strlen(eml) == 0) eml=pre_eml;
@@ -36,15 +43,14 @@ void upd_conf(char *dir_adr, char *usr, char *eml){
 
 void glob_upd_conf(char *usr, char *eml){
     upd_conf(from_home("/.targits"), usr, eml);
-    FILE *f=fopen(from_home("/.targits/config"), "r");
+    FILE *f=fopen(from_home("/.targits/repos"), "r");
     char dir_adr[MAX_ADR_NAME];
-    while(fgets(dir_adr, MAX_ADR_NAME, f) != NULL)
+    while(fscanf(f, "%s", dir_adr) != EOF)
         upd_conf(dir_adr, usr, eml);
     fclose(f);
 }
 
 int conf(int argc, char *argv[]){
-    printf("%d\n", argc);
     if(argc == 2){
         perror("Please declare what you want to config");
         return 1;
@@ -66,7 +72,6 @@ int conf(int argc, char *argv[]){
         perror("You can only config the user.name or user.email");
         return 1;
     }
-    printf("aha\n");
     if(id+1==argc){
         fprintf(stderr, "The %s should not be empty: %s\n", argv[id], strerror(errno));
         return 1;
@@ -77,17 +82,10 @@ int conf(int argc, char *argv[]){
         fprintf(stderr, "If you want to use a %s with whitspaces, you have to put it in double quotations: %s\n", argv[id], strerror(errno));
         return 1;
     }
-    printf("%d khob\n", id);
     if(id==3)
         glob_upd_conf(usr, eml);
-    else{
-        printf("%s\n", dir);
+    else
         upd_conf(dir, usr, eml);
-    }
     printf("%s updated!\n", argv[id]);
     return 0;
-}
-
-int main(int argc, char *argv[]){
-    return conf(argc, argv);
 }

@@ -1,4 +1,4 @@
-#include "repo.c"
+#include "config.c"
 
 int init(){
     if(where_is_inited() != NULL){

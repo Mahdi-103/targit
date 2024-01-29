@@ -17,7 +17,6 @@ char *where_is_inited(){
             if(entry->d_type==4 && strcmp(entry->d_name, ".targit") == 0){
                 chdir(".targit");
                 if(getcwd(res, MAX_ADR_NAME) == NULL) exit(1);
-                printf("kristof :: %s\n", res);
                 break;
             }
         }
