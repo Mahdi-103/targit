@@ -4,32 +4,33 @@
 #include <sys/stat.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
 
-int is_inited(){
+DIR *where_is_inited(){
     char adr[1000], tmp_adr[1000];
-    if(getcwd(adr, 1000) == NULL) return 1;
-    DIR *dir;
+    if(getcwd(adr, 1000) == NULL) exit(1);
+    DIR *dir, *res=NULL;
     struct dirent *entry;
     while(true){
         dir=opendir(".");
-        bool exist=false;
         while((entry=readdir(dir)) != 0){
             if(entry->d_type==4 && strcmp(entry->d_name, ".targit") == 0){
-                exist=true;
-                return 1;
+                res=opendir(".targit");
+                break;
             }
         }
         closedir(dir);
-        if(getcwd(tmp_adr, 1000) == NULL) return 1;
+        if(res != NULL) break;
+        if(getcwd(tmp_adr, 1000) == NULL) exit(1);
         if(strcmp(tmp_adr, "/") == 0) break;
         chdir("..");
     }
     chdir(adr);
-    return 0;
+    return res;
 }
 
 int init(){
-    if(is_inited()){
+    if(where_is_inited() != NULL){
         perror("The repo is already initialized\n");
         return 1;
     }
