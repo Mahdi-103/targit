@@ -7,13 +7,20 @@
 void init_conf(char *dir_adr){
     char conf[MAX_ADR_NAME];
     memcpy(conf, dir_adr, strlen(dir_adr));
-    memcpy(conf+strlen(dir_adr), "config", 7);
+    memcpy(conf+strlen(dir_adr), "/config", 8);
+    printf("khir :: %s\n", conf);
     FILE *f=fopen(conf, "w");
     FILE *g=fopen(from_home("/.targits/config"), "r");
+    if(g == NULL) exit(1);
     while(fgets(conf, MAX_NME_LNG, g) != NULL){
+        int sz=strlen(conf);
+        if(conf[sz-1]=='\n') conf[sz-1]='\0';
         fprintf(f, "%s\n", conf);
     }
     fclose(f);
+    fclose(g);
+    g=fopen(from_home("/.targits/repos"), "a");
+    fprintf(g, "%s\n", dir_adr);
     fclose(g);
 }
 
@@ -22,16 +29,15 @@ void upd_conf(char *dir_adr, char *usr, char *eml){
     memcpy(conf, dir_adr, strlen(dir_adr));
     memcpy(conf+strlen(dir_adr), "/config", 8);
     FILE *f=fopen(conf, "r");
+    if(f == NULL)   return;
     char pre_usr[MAX_NME_LNG], pre_eml[MAX_NME_LNG];
     fgets(pre_usr, MAX_NME_LNG, f);{
         int sz=strlen(pre_usr);
-        if(pre_usr[sz-1]=='\n')
-            pre_usr[sz-1]='\0';
+        if(pre_usr[sz-1]=='\n') pre_usr[sz-1]='\0';
     }
     fgets(pre_eml, MAX_NME_LNG, f);{
         int sz=strlen(pre_eml);
-        if(pre_eml[sz-1]=='\n')
-            pre_eml[sz-1]='\0';
+        if(pre_eml[sz-1]=='\n') pre_eml[sz-1]='\0';
     }
     fclose(f);
     if(strlen(usr) == 0) usr=pre_usr;
@@ -44,6 +50,7 @@ void upd_conf(char *dir_adr, char *usr, char *eml){
 void glob_upd_conf(char *usr, char *eml){
     upd_conf(from_home("/.targits"), usr, eml);
     FILE *f=fopen(from_home("/.targits/repos"), "r");
+    if(f == NULL) exit(1);
     char dir_adr[MAX_ADR_NAME];
     while(fscanf(f, "%s", dir_adr) != EOF)
         upd_conf(dir_adr, usr, eml);
@@ -79,7 +86,7 @@ int conf(int argc, char *argv[]){
     if(id+2==argc)
         memcpy(tmp, argv[id+1], strlen(argv[id+1])+1);
     else{
-        fprintf(stderr, "If you want to use a %s with whitspaces, you have to put it in double quotations: %s\n", argv[id], strerror(errno));
+        fprintf(stderr, "If you want to use a %s with whitespaces, you have to put it in double quotations: %s\n", argv[id], strerror(errno));
         return 1;
     }
     if(id==3)
