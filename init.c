@@ -9,10 +9,9 @@ int init(){
     if(chdir(".targit") != 0) exit(1);
     char dir_adr[MAX_ADR_NAME];
     if(getcwd(dir_adr, MAX_ADR_NAME) == NULL) return 1;
-    printf("aha\n");
     init_conf(dir_adr);
-    printf("aha\n");
-    FILE *f=fopen("staged", "w");
+    if(mkdir("stage", 0755) != 0) return 1;
+    FILE *f=fopen("tracked", "w");
     if(mkdir("commits", 0755) != 0) return 1;
     chdir("..");
     printf("The repo initialized successfully\n");
