@@ -1,17 +1,4 @@
-#include<stdio.h>
-#include<dirent.h>
-#include<stdlib.h>
-#include<string.h>
-#define MAX_ADR_NAME 1000
-
-char *from_home(char *a){
-    static char adr[MAX_ADR_NAME];
-    int sz=strlen(getenv("HOME"));
-    memcpy(adr, getenv("HOME"), sz);
-    adr[sz]='/';
-    memcpy(adr+sz+1, a, strlen(a)+1);
-    return adr;
-}
+#include "func.c"
 
 void log_check(){
     char *adr=from_home("/.targits");

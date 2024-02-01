@@ -1,7 +1,3 @@
-#include <unistd.h>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <stdlib.h>
 #include "logs.c"
 
 char *where_is_inited(){

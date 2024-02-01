@@ -2,13 +2,11 @@
 #include <stdlib.h>
 #include "repo.c"
 #include "errno.h"
-#define MAX_NME_LNG 100
 
 void init_conf(char *dir_adr){
     char conf[MAX_ADR_NAME];
     memcpy(conf, dir_adr, strlen(dir_adr));
     memcpy(conf+strlen(dir_adr), "/config", 8);
-    printf("khir :: %s\n", conf);
     FILE *f=fopen(conf, "w");
     FILE *g=fopen(from_home("/.targits/config"), "r");
     if(g == NULL) exit(1);
@@ -56,6 +54,10 @@ void glob_upd_conf(char *usr, char *eml){
         upd_conf(dir_adr, usr, eml);
     fclose(f);
 }
+
+void add_src(char *src, char *cmd);
+
+void glob_add_src(char *src, char *cmd);
 
 int conf(int argc, char *argv[]){
     if(argc == 2){
