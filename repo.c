@@ -4,7 +4,7 @@ char *where_is_inited(){
     char adr[MAX_ADR_NAME], tmp_adr[MAX_ADR_NAME];
     if(getcwd(adr, MAX_ADR_NAME) == NULL) exit(1);
     DIR *dir;
-    static char res[MAX_ADR_NAME];
+    char *res=repo_path;
     *res='\0';
     struct dirent *entry;
     while(1){

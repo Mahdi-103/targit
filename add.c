@@ -20,7 +20,7 @@ void track(const char *path){
     fclose(f);
 }
 
-int add_file(char *path){
+int add_file_opr(char *path){
     FILE *f=fopen(path, "r");
     DIR *dir=opendir("stage");
     struct dirent *entry;    
@@ -91,6 +91,12 @@ int add_file(char *path){
     return 0;
 }
 
+int add_file(char *path){
+    char cur_dir[MAX_ADR_NAME];
+    if(getcwd(cur_dir, MAX_ADR_NAME) == NULL) return 1;
+    
+}
+
 void add_dir_oex(char *dir_adr){ // add dir only existing files in working directory
     DIR *dir=opendir(".");
     struct dirent *entry;
@@ -108,100 +114,73 @@ void add_dir_oex(char *dir_adr){ // add dir only existing files in working direc
     }
 }
 
-void add_dir(char *dir_path){
+int add_dir_fle(char *path){
     FILE *t=fopen("tracked", "r");
     char tmp_path[MAX_ADR_NAME];
+    int ok=0, res=1;
     while(fscanf(t, "%s", tmp_path) != EOF){
-        if((tmp_path, dir_path, strlen(dir_path)) == 0)
+        if((tmp_path, path, strlen(path)) == 0){
             add_file(tmp_path);
+            res=0;
+            ok=(strlen(tmp_path)==strlen(path));
+        }
     }
     fclose(t);
-    if(getcwd(tmp_path, MAX_ADR_NAME) == NULL) exit(1);
-    chdir(dir_path);
-    add_dir_oex(dir_path);
-    chdir(tmp_path);
-}
-
-int wildcard_ok(const char *str, const char *name){
-    if(*str=='\0')
-        return 1;
-    else if(*str=='*'){
-        while(*str=='*')
-            ++str;
-        if(*str=='\0')
-            return 1;
-        int sz=0;
-        while(str[sz]!='*' && str[sz]!='\0')
-            ++sz;
-        if(str[sz]=='\0'){
-            while(strlen(name)>strlen(str))
-                ++name;
-            return !strcmp(str, name);
-        }
-        int kmp[MAX_NME_LNG];
-        char str_name[2*MAX_NME_LNG];
-        memcpy(str_name, str, sz+1);
-        memcpy(str_name+sz+1, name, strlen(name)+1);
-        kmp[0]=0;
-        int h=-1;
-        for(int i=1;i<strlen(str_name);++i){
-            int x=kmp[i-1];
-            kmp[i]=0;
-            while(1){
-                if(str_name[x]==str_name[i]){
-                    kmp[i]=x+1;
-                    break;
-                }
-                if(x==0)
-                    break;
-                x=kmp[x-1];
-            }
-            if(kmp[i]==sz){
-                h=i;
-                break;
-            }
-        }
-        if(h==-1)
-            return 0;
-        return wildcard_ok(str+sz, name+h-sz);
+    if(ok) return 0;
+    t=fopen(path, "r");
+    if(t != NULL){
+        fclose(t);
+        add_file(path);
+        return 0;
     }
-    else{
-        while(*str!='*' && *str!='\0'){
-            if(*str!=*name)
-                return 0;
-            ++str;
-            ++name;
-        }
-        return wildcard_ok(str, name);
+    DIR *d=opendir(path);
+    if(d != NULL){
+        closedir(d);
+        if(getcwd(tmp_path, MAX_ADR_NAME) == NULL) exit(1);
+        chdir(path);
+        add_dir_oex(path);
+        chdir(tmp_path);
+        return 0;
     }
-}
-
-void wildcard(char *str){
-
+    return res;
 }
 
 int add(int argc, char *argv[]){
-    char cur_adr[MAX_ADR_NAME], *tar_adr;
+    char cur_adr[MAX_ADR_NAME];
     if(getcwd(cur_adr, MAX_ADR_NAME) == NULL) return 1;
-    if((tar_adr=where_is_inited()) == NULL){
+    if((where_is_inited()) == NULL){
         perror("The repo is not initialized\n");
         return 1;
     }
-    chdir(tar_adr);
-    if(strcmp(argv[2], "-f") == 0){
+    chdir(repo_path);
+    if(strcmp(argv[2], "-n") == 0){
 
     }
-    else if(strcmp(argv[2], "-n") == 0){
-
+    else if(strcmp(argv[2], "-redo") == 0){
+        
     }
-    else if(strcmp(argv[2], "-redo")){
-
+    else{
+        int x=2;
+        if(strcmp(argv[2], "-f"))
+            ++x;
+        for(int i=x;i<argc;++i){
+            char pth[MAX_ADR_NAME];
+            abs_path(pth, argv[i]);
+            if(in_repo(pth) == 0){
+                printf("%s is out of repository\n", argv[i]);
+                continue;
+            }
+            int hh=add_dir_fle(pth);
+            if(hh=0)
+                printf("%s added successfuly\n", argv[i]);
+            else 
+                printf("No file or directory wich path is %s\n", argv[i]);
+        }
     }
-
 }
 
 int main(){
     chdir(".targit");
     add_file("/home/mahdi/Documents/targit/repo.c");
-    printf("fuck\n");   
+    add_file("/home/mahdi/Documents/targit/logs.c");
 }

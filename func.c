@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #define MAX_ADR_NAME 1000
 #define MAX_NME_LNG 100
+char repo_path[MAX_ADR_NAME];
 
 int flecpy(FILE *paste, FILE *source){
     char ch;
@@ -43,4 +44,101 @@ void deblank(char *s){
             break;
         ++s;   
     }
+}
+
+char *abs_path(char *path, const char *tmp_path){
+    char dir_adr[MAX_ADR_NAME];
+    if(*tmp_path!='/'){
+        if(getcwd(dir_adr, MAX_ADR_NAME) == NULL) return NULL;
+        int sz=strlen(dir_adr);
+        dir_adr[sz]='/';
+        memcpy(dir_adr+sz+1, tmp_path, strlen(tmp_path)+1);
+        tmp_path=dir_adr;
+    }
+    path[0]='/';
+    path[1]='\0';
+    char tmp[MAX_NME_LNG];
+    int i=1, j=0;
+    while(i<strlen(tmp_path)){
+        while(tmp_path[i] != '/' && tmp_path[i]!='\0'){
+            tmp[j]=tmp_path[i];
+            ++j;
+            ++i;
+        }
+        tmp[j]='/';
+        tmp[j+1]='\0';
+        if(strcmp(tmp, "../") == 0){
+            if(strlen(path)==1)
+                continue;
+            do{
+                path[strlen(path)-1]='\0';
+            }while(path[strlen(path)-1]!='/');
+        }
+        else if(strcmp(tmp, "./"))
+            memcpy(path+strlen(path), tmp, j+2);
+        ++i;
+        j=0;
+    }
+    if(strlen(path) > 1)
+        path[strlen(path)-1]='\0';
+    return path;
+}
+
+int wildcard_ok(const char *str, const char *name){
+    if(*str=='\0')
+        return 1;
+    else if(*str=='*'){
+        while(*str=='*')
+            ++str;
+        if(*str=='\0')
+            return 1;
+        int sz=0;
+        while(str[sz]!='*' && str[sz]!='\0')
+            ++sz;
+        if(str[sz]=='\0'){
+            while(strlen(name)>strlen(str))
+                ++name;
+            return !strcmp(str, name);
+        }
+        int kmp[MAX_NME_LNG];
+        char str_name[2*MAX_NME_LNG];
+        memcpy(str_name, str, sz+1);
+        memcpy(str_name+sz+1, name, strlen(name)+1);
+        kmp[0]=0;
+        int h=-1;
+        for(int i=1;i<strlen(str_name);++i){
+            int x=kmp[i-1];
+            kmp[i]=0;
+            while(1){
+                if(str_name[x]==str_name[i]){
+                    kmp[i]=x+1;
+                    break;
+                }
+                if(x==0)
+                    break;
+                x=kmp[x-1];
+            }
+            if(kmp[i]==sz){
+                h=i;
+                break;
+            }
+        }
+        if(h==-1)
+            return 0;
+        return wildcard_ok(str+sz, name+h-sz);
+    }
+    else{
+        while(*str!='*' && *str!='\0'){
+            if(*str!=*name)
+                return 0;
+            ++str;
+            ++name;
+        }
+        return wildcard_ok(str, name);
+    }
+}
+
+int in_repo(char *path){
+    if(strncmp(path, repo_path, strlen(repo_path)-7) == 0) return 1;
+    return 0;
 }
