@@ -179,13 +179,37 @@ int redo(){
     return 0;
 }
 
+void lst(int i, int n){//lists files in cwd till depth n
+    if(n==0) return;
+    DIR *dir=opendir(".");
+    struct dirent *entry;
+    while((entry=readdir(dir)) != NULL){
+        if(entry->d_type==8){
+            for(int j=0;j<i;++j)
+                printf("\t");
+            printf("%s : ", entry->d_name);
+            printf("%s\n", (is_staged(entry->d_name) ? "staged" : "unstaged"));
+        }
+        else if(is_ok_dir(entry->d_name) && n>1){
+            for(int j=0;j<i;++j)
+                printf("\t");
+            printf("%s : \n", entry->d_name);
+            chdir(entry->d_name);
+            lst(i+1, n-1);
+            chdir("..");
+        }
+    }
+    printf("\n");
+}
+
 int add(int argc, char *argv[]){
     if((where_is_inited()) == NULL){
         perror("The repo is not initialized\n");
         return 1;
     }
     if(strcmp(argv[2], "-n") == 0){
-        
+        lst(0, atoi(argv[3]));
+        return 0;
     }
     else if(strcmp(argv[2], "-redo") == 0)
         return redo();

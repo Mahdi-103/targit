@@ -13,6 +13,7 @@ int flecpy(FILE *paste, FILE *source){
     char ch;
     while((ch=getc(source)) != EOF)
         fprintf(paste, "%c", ch);
+    return 0;
 }
 
 char *cnct(const char *a, const char * b){
@@ -152,7 +153,7 @@ int in_repo(char *path){
     return 0;
 }
 
-int is_taracked(const char *path){
+int is_tracked(const char *path){
     FILE *f=fopen(cnct(repo_path, "/tracked"), "r");
     char tmp_path[MAX_ADR_NAME];
     int res=0;
@@ -170,4 +171,43 @@ void track(const char *path){
     FILE *f=fopen(cnct(repo_path, "/tracked"), "a");
     fprintf(f, "%s\n", path);
     fclose(f);
+}
+
+int is_ok_dir(char *name){
+    if(strcmp(name, ".") == 0)
+        return 0;
+    if(strcmp(name, "..") == 0)
+        return 0;
+    if(strcmp(name, ".targit") == 0)
+        return 0;
+    return 1;
+}
+
+int is_changed(){
+
+}
+
+int is_staged(char *path){//path must be absolute
+    char cwd[MAX_ADR_NAME], abs_p[MAX_ADR_NAME];
+    if(getcwd(cwd, MAX_ADR_NAME) == NULL) return 2;
+    if((path = abs_path(abs_p, path)) == NULL) return 2;
+    chdir(cnct(repo_path, "/stage"));
+    DIR *dir=opendir(".");
+    struct dirent *entry;
+    int ok=0;
+    while((entry=readdir(dir)) != NULL){
+        if(*entry->d_name == '.')
+            continue;
+        char tmp_path[MAX_ADR_NAME];
+        FILE *g=fopen(cnct(entry->d_name, "/file_path"), "r");
+        fscanf(g, "%s", tmp_path);
+        if(strcmp(tmp_path, path) == 0){
+            closedir(dir);
+            fclose(g);
+            ok=1;
+            break;
+        }
+    }    
+    chdir(cwd);
+    return ok;
 }
