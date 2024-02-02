@@ -1,31 +1,11 @@
 #include "repo.c"
 
-int is_taracked(const char *path){
-    FILE *f=fopen("tracked", "r");
-    char tmp_path[MAX_ADR_NAME];
-    int res=0;
-    while(fscanf(f, "%s", tmp_path) != EOF){
-        if(strcmp(tmp_path, path) == 0){
-            res=1;
-            break;
-        }
-    }
-    fclose(f);
-    return res;
-}
-
-void track(const char *path){
-    FILE *f=fopen("tracked", "a");
-    fprintf(f, "%s\n", path);
-    fclose(f);
-}
-
-int add_file_opr(char *path){
+int add_file_opr(char *path){ // cwd should be .targit and path is absolute
     FILE *f=fopen(path, "r");
     DIR *dir=opendir("stage");
     struct dirent *entry;    
     if(f == NULL){
-        if(is_taracked(path)){
+        if(is_tracked(path)){
             chdir("stage");
             while((entry=readdir(dir)) != NULL){
                 if(*entry->d_name == '.')
@@ -43,12 +23,10 @@ int add_file_opr(char *path){
             }
             return 1;
         }
-        else{
-            perror("No such file or directory");
-            return 1;
-        }
+        else return 2;
     }
-    if(is_taracked(path)){
+    if(is_tracked(path)){
+        chdir("stage");
         while((entry=readdir(dir)) != NULL){
             if(*entry->d_name == '.')
                 continue;
@@ -91,96 +69,145 @@ int add_file_opr(char *path){
     return 0;
 }
 
-int add_file(char *path){
-    char cur_dir[MAX_ADR_NAME];
-    if(getcwd(cur_dir, MAX_ADR_NAME) == NULL) return 1;
-    
+int add_file(char *path){ // adds from anywhere and path could be either absolute or not
+    char cwd[MAX_ADR_NAME], abs_p[MAX_ADR_NAME];
+    if(getcwd(cwd, MAX_ADR_NAME) == NULL) return 1;
+    if(abs_path(abs_p, path) == NULL)   return 1;
+    if(in_repo(abs_p) == 0) return 3;
+    if(is_changed() == 0) return -1;
+    chdir(repo_path);
+    int res=add_file_opr(abs_p);
+    chdir(cwd);
+    return res;//returns 3 if out of repo, 2 if not existed, 1 if unexpected error, 0 if ok
 }
 
-void add_dir_oex(char *dir_adr){ // add dir only existing files in working directory
+void add_dir_oex(){ // adds existing files in cwd and its subtree
     DIR *dir=opendir(".");
     struct dirent *entry;
-    char tmp_path[MAX_ADR_NAME];
     while((entry=readdir(dir)) != NULL){
-        memcpy(tmp_path, dir_adr, strlen(dir_adr));
-        memcpy(tmp_path+strlen(dir_adr), entry->d_name, strlen(entry->d_name)+1);
         if(entry->d_type==8)
-            add_file(tmp_path);
-        else if(*entry->d_name!='.'){
+            add_file(entry->d_name);
+        else if(is_ok_dir(entry->d_name)){
             chdir(entry->d_name);
-            add_dir_oex(tmp_path);
+            add_dir_oex();
             chdir("..");
         }
     }
+    closedir(dir);
 }
 
-int add_dir_fle(char *path){
+int add_dir_fle_opr(char *path){ // cwd should be .targit and path is absolute
     FILE *t=fopen("tracked", "r");
     char tmp_path[MAX_ADR_NAME];
-    int ok=0, res=1;
+    int ok=0, res=2;
     while(fscanf(t, "%s", tmp_path) != EOF){
-        if((tmp_path, path, strlen(path)) == 0){
-            add_file(tmp_path);
-            res=0;
+        if(strncmp(tmp_path, path, strlen(path)) == 0){
+            res=add_file_opr(tmp_path);
             ok=(strlen(tmp_path)==strlen(path));
         }
     }
     fclose(t);
-    if(ok) return 0;
+    if(ok) return res;
+    if(is_dir(path)){
+        chdir(path);
+        add_dir_oex();
+        chdir(repo_path);
+        return 0;
+    }
     t=fopen(path, "r");
     if(t != NULL){
         fclose(t);
-        add_file(path);
-        return 0;
-    }
-    DIR *d=opendir(path);
-    if(d != NULL){
-        closedir(d);
-        if(getcwd(tmp_path, MAX_ADR_NAME) == NULL) exit(1);
-        chdir(path);
-        add_dir_oex(path);
-        chdir(tmp_path);
-        return 0;
+        return add_file_opr(path);
     }
     return res;
 }
 
+int add_dir_fle(char *path){ // adds from anywhere and path could be either absolute or not
+    char cwd[MAX_ADR_NAME], abs_p[MAX_ADR_NAME];
+    if(getcwd(cwd, MAX_ADR_NAME) == NULL) return 1;
+    if(abs_path(abs_p, path) == NULL)   return 1;
+    if(in_repo(abs_p) == 0) return 3;
+    chdir(repo_path);
+    int res=add_dir_fle_opr(abs_p);
+    chdir(cwd);
+    return res;//returns 3 if out of repo, 2 if not existed, 1 if unexpected error, 0 if ok
+}
+
+void redo_opr(){//currently in stage/i
+    char cwd[MAX_ADR_NAME], tmp_path[MAX_ADR_NAME];
+    if(getcwd(cwd, MAX_ADR_NAME) == NULL) exit(1);
+    FILE *f_p=fopen(cnct(cwd, "/file_path"), "r");
+    fscanf(f_p, "%s", tmp_path);
+    fclose(f_p);
+    int sz=strlen(tmp_path);
+    char *name=strtok(tmp_path, "/");
+    chdir("/");
+    while(1){
+        if(name+strlen(name) == tmp_path+sz)
+            break;
+        if(chdir(name) != 0){
+            if(mkdir(name, 0777) != 0) exit(1);
+            chdir(name);
+        }
+        name=strtok(NULL, "/");
+    }
+    if(access(cnct(cwd, "/file"), F_OK) == 0){
+        FILE *f=fopen(name, "w");
+        FILE *g=fopen(cnct(cwd, "/file"), "r");
+        flecpy(f, g);
+        fclose(f);
+        fclose(g);
+    }
+    else if(access(name, F_OK) == 0)
+        remove(name);
+    chdir(cwd);
+}
+
+int redo(){
+    char tmp_path[MAX_ADR_NAME];
+    chdir(repo_path);
+    chdir("stage");
+    DIR *dir=opendir(".");
+    struct dirent *entry;
+    while((entry=readdir(dir)) != 0){
+        if(entry->d_name[0] == '.')
+            continue;
+        chdir(entry->d_name);
+        redo_opr();
+        chdir("..");
+    }
+    return 0;
+}
+
 int add(int argc, char *argv[]){
-    char cur_adr[MAX_ADR_NAME];
-    if(getcwd(cur_adr, MAX_ADR_NAME) == NULL) return 1;
     if((where_is_inited()) == NULL){
         perror("The repo is not initialized\n");
         return 1;
     }
-    chdir(repo_path);
     if(strcmp(argv[2], "-n") == 0){
-
-    }
-    else if(strcmp(argv[2], "-redo") == 0){
         
     }
+    else if(strcmp(argv[2], "-redo") == 0)
+        return redo();
     else{
         int x=2;
-        if(strcmp(argv[2], "-f"))
+        if(strcmp(argv[2], "-f") == 0)
             ++x;
         for(int i=x;i<argc;++i){
-            char pth[MAX_ADR_NAME];
-            abs_path(pth, argv[i]);
-            if(in_repo(pth) == 0){
-                printf("%s is out of repository\n", argv[i]);
-                continue;
-            }
-            int hh=add_dir_fle(pth);
-            if(hh=0)
+            int hh=add_dir_fle(argv[i]);
+            if(hh == 0)
                 printf("%s added successfuly\n", argv[i]);
-            else 
+            else if(hh == 2)
                 printf("No file or directory wich path is %s\n", argv[i]);
+            else if(hh == 3)
+                printf("%s is out of repository\n", argv[i]);
+            else 
+                return 1;
         }
     }
+    return 0;
 }
 
-int main(){
-    chdir(".targit");
-    add_file("/home/mahdi/Documents/targit/repo.c");
-    add_file("/home/mahdi/Documents/targit/logs.c");
+int main(int argc, char *argv[]){
+    add(argc, argv);
 }
