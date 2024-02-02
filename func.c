@@ -138,7 +138,36 @@ int wildcard_ok(const char *str, const char *name){
     }
 }
 
+int is_dir(char *path){
+    DIR *dir=opendir(path);
+    if(dir){
+        closedir(dir);
+        return 1;
+    }
+    return 0;
+}
+
 int in_repo(char *path){
     if(strncmp(path, repo_path, strlen(repo_path)-7) == 0) return 1;
     return 0;
+}
+
+int is_taracked(const char *path){
+    FILE *f=fopen(cnct(repo_path, "/tracked"), "r");
+    char tmp_path[MAX_ADR_NAME];
+    int res=0;
+    while(fscanf(f, "%s", tmp_path) != EOF){
+        if(strcmp(tmp_path, path) == 0){
+            res=1;
+            break;
+        }
+    }
+    fclose(f);
+    return res;
+}
+
+void track(const char *path){
+    FILE *f=fopen(cnct(repo_path, "/tracked"), "a");
+    fprintf(f, "%s\n", path);
+    fclose(f);
 }
