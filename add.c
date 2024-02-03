@@ -84,8 +84,8 @@ int add_file(char *path){ // adds from anywhere and path could be either absolut
     if(getcwd(cwd, MAX_ADR_NAME) == NULL) return 1;
     if(abs_path(abs_p, path) == NULL)   return 1;
     if(in_repo(abs_p) == 0) return 3;
-    if(is_changed() == 0) return -1;
     chdir(repo_path);
+    printf("kddd :: %s\n", abs_p);
     int res=add_file_opr(abs_p);
     chdir(cwd);
     return res;//returns 3 if out of repo, 2 if not existed, 1 if unexpected error, 0 if ok
@@ -95,6 +95,7 @@ void add_dir_oex(){ // adds existing files in cwd and its subtree
     DIR *dir=opendir(".");
     struct dirent *entry;
     while((entry=readdir(dir)) != NULL){
+        printf("aha :: %s\n", entry->d_name);
         if(entry->d_type==8)
             add_file(entry->d_name);
         else if(is_ok_dir(entry->d_name)){
@@ -119,6 +120,7 @@ int add_dir_fle_opr(char *path){ // cwd should be .targit and path is absolute
     fclose(t);
     if(ok) return res;
     if(is_dir(path)){
+        printf("nigga what?\n");
         chdir(path);
         add_dir_oex();
         chdir(repo_path);
@@ -137,6 +139,7 @@ int add_dir_fle(char *path){ // adds from anywhere and path could be either abso
     if(getcwd(cwd, MAX_ADR_NAME) == NULL) return 1;
     if(abs_path(abs_p, path) == NULL)   return 1;
     if(in_repo(abs_p) == 0) return 3;
+    if(strcmp(abs_p+(strlen(abs_p)-7), ".tragit") == 0) return 4;
     chdir(repo_path);
     int res=add_dir_fle_opr(abs_p);
     chdir(cwd);
@@ -248,6 +251,8 @@ int add(int argc, char *argv[]){
                 printf("No file or directory wich path is %s\n", argv[i]);
             else if(hh == 3)
                 printf("%s is out of repository\n", argv[i]);
+            else if(hh == 4)
+                printf("Adding .targit can cause unexpected errors and is banned\n");
             else 
                 return 1;
         }

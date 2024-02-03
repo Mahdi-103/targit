@@ -15,5 +15,6 @@ int main(int argc, char *argv[]){
     else if((strcmp(argv[1], "commit") == 0) || (strcmp(argv[1], "set") == 0) ||
             (strcmp(argv[1], "replace") == 0) || (strcmp(argv[1], "remove") == 0))
             return commit(argc, argv);
+    else if(strcmp(argv[1], "status") == 0) return show_status(argc, argv);
     else return cmd_err();
 }

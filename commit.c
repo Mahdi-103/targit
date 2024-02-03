@@ -5,6 +5,23 @@ struct commit_info{
     char *cur_time, *msg;
 };
 
+int ok_head(){ // cwd could be anywhere
+    char cwd[MAX_ADR_NAME];
+    if(getcwd(cwd, MAX_ADR_NAME) == NULL) return -1;
+    chdir(repo_path);
+    int head, branch_head;
+    FILE *h=fopen("HEAD", "r");
+    fscanf(h, "%d", &head);
+    fclose(h);
+    chdir(cnct("branches/", which_branch()));
+    h=fopen("HEAD", "r");
+    fscanf(h, "%d", &branch_head);
+    chdir(cwd);
+    if(branch_head == head)
+        return 1;
+    return 0;
+}
+
 int new_commit_id(){ // cwd is .targit/commits
     int id;
     FILE *num=fopen("num", "r");
@@ -17,13 +34,21 @@ int new_commit_id(){ // cwd is .targit/commits
 }
 
 int upd_head(int new_head){ // cwd could be anywhere
+    char cwd[MAX_ADR_NAME];
+    if(getcwd(cwd, MAX_ADR_NAME) == NULL) return -1;
+    chdir(repo_path);
     int res;
-    FILE *h=fopen(cnct(repo_path, "/HEAD"), "r");
+    FILE *h=fopen("HEAD", "r");
     fscanf(h, "%d", &res);
     fclose(h);
-    h=fopen(cnct(repo_path, "/HEAD"), "w");
+    h=fopen("HEAD", "w");
     fprintf(h, "%d", new_head);
     fclose(h);
+    chdir(cnct("branches/", which_branch()));
+    h=fopen("HEAD", "w");
+    fprintf(h, "%d", new_head);
+    fclose(h);
+    chdir(cwd);
     return res;
 }
 
@@ -117,6 +142,10 @@ struct commit_info *commit_opr(int argc, char *argv[]){ // cwd is .targit
 int commit(int argc, char *argv[]){
     if(where_is_inited() == NULL){
         perror("The repo is not initialized\n");
+        return 1;
+    }
+    if(ok_head() != 1){
+        printf("You must be on HEAD of project to commit\n");
         return 1;
     }
     char cwd[MAX_ADR_NAME];

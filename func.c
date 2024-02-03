@@ -9,7 +9,7 @@
 #include "errno.h"
 #define MAX_ADR_NAME 1000
 #define MAX_NME_LNG 100
-char repo_path[MAX_ADR_NAME], the_head[10];
+char repo_path[MAX_ADR_NAME], the_head[10], branch_name[MAX_NME_LNG];
 
 char *head(){ 
     char cwd[MAX_ADR_NAME];
@@ -41,6 +41,13 @@ char *strcnct(char *res, const char *a, const char *b){
     char *tmp_res=cnct(a, b);
     memcpy(res, tmp_res, strlen(tmp_res)+1);
     return res;
+}
+
+char *which_branch(){
+    FILE *f=fopen(cnct(repo_path, "/current_branch"), "r");
+    fgetS(branch_name, MAX_NME_LNG, f);
+    fclose(f);
+    return branch_name;
 }
 
 int is_dir(char *path){
@@ -247,7 +254,8 @@ int in_repo(char *path){
 
 int is_tracked(const char *path){
     FILE *f=fopen(cnct(repo_path, "/tracked"), "r");
-    char tmp_path[MAX_ADR_NAME];
+    char tmp_path[MAX_ADR_NAME], abs_p[MAX_ADR_NAME];
+    path=abs_path(abs_p, path);
     int res=0;
     while(fscanf(f, "%s", tmp_path) != EOF){
         if(strcmp(tmp_path, path) == 0){
@@ -273,10 +281,6 @@ int is_ok_dir(char *name){
     if(strcmp(name, ".targit") == 0)
         return 0;
     return 1;
-}
-
-int is_changed(){
-
 }
 
 int is_same(char *path_f, char *path_g){

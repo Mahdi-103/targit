@@ -1,8 +1,8 @@
-#include "commit.c"
+#include "branch.c"
 
 int init(){
     if(where_is_inited() != NULL){
-        perror("The repo is already initialized");
+        printf("The repo is already initialized\n");
         return 1;
     }
     if(mkdir(".targit", 0755) != 0) return 1;
@@ -12,14 +12,25 @@ int init(){
     init_conf(dir_adr);
     if(mkdir("stage", 0755) != 0) return 1;
     if(mkdir("commits", 0755) != 0) return 1;
+    if(mkdir("branches", 0755) != 0) return 1;
     if(mkdir("shortcuts", 0755) != 0) return 1;
+    if(mkdir("branches/master", 0755) != 0) return 1;
     if(mkdir("shortcuts/message", 0755) != 0) return 1;
     FILE *f=fopen("tracked", "w");
     fclose(f);
     f=fopen("HEAD", "w");
     fprintf(f, "-1");
     fclose(f);
+    f=fopen("current_branch", "w");
+    fprintf(f, "master");
+    fclose(f);
     f=fopen("commits/num", "w");
+    fprintf(f, "-1");
+    fclose(f);
+    f=fopen("branches/master/first_commit", "w");
+    fprintf(f, "-1");
+    fclose(f);
+    f=fopen("branches/master/HEAD", "w");
     fprintf(f, "-1");
     fclose(f);
     chdir("..");
