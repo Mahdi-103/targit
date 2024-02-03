@@ -85,7 +85,6 @@ int add_file(char *path){ // adds from anywhere and path could be either absolut
     if(abs_path(abs_p, path) == NULL)   return 1;
     if(in_repo(abs_p) == 0) return 3;
     chdir(repo_path);
-    printf("kddd :: %s\n", abs_p);
     int res=add_file_opr(abs_p);
     chdir(cwd);
     return res;//returns 3 if out of repo, 2 if not existed, 1 if unexpected error, 0 if ok
@@ -95,7 +94,6 @@ void add_dir_oex(){ // adds existing files in cwd and its subtree
     DIR *dir=opendir(".");
     struct dirent *entry;
     while((entry=readdir(dir)) != NULL){
-        printf("aha :: %s\n", entry->d_name);
         if(entry->d_type==8)
             add_file(entry->d_name);
         else if(is_ok_dir(entry->d_name)){
@@ -120,7 +118,6 @@ int add_dir_fle_opr(char *path){ // cwd should be .targit and path is absolute
     fclose(t);
     if(ok) return res;
     if(is_dir(path)){
-        printf("nigga what?\n");
         chdir(path);
         add_dir_oex();
         chdir(repo_path);
@@ -192,7 +189,7 @@ int redo(){
     return 0;
 }
 
-void lst(int i, int n){//lists files in cwd till depth n
+void lst_stage(int i, int n){//lists files in cwd till depth n
     if(n==0) return;
     DIR *dir=opendir(".");
     struct dirent *entry;
@@ -208,7 +205,7 @@ void lst(int i, int n){//lists files in cwd till depth n
                 printf("\t");
             printf("%s : \n", entry->d_name);
             chdir(entry->d_name);
-            lst(i+1, n-1);
+            lst_stage(i+1, n-1);
             chdir("..");
         }
     }
@@ -229,7 +226,7 @@ int add(int argc, char *argv[]){
             printf("Invalid command\n");
             return 1;
         }
-        lst(0, atoi(argv[3]));
+        lst_stage(0, atoi(argv[3]));
         return 0;
     }
     else if(strcmp(argv[2], "-redo") == 0){

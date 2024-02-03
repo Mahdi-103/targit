@@ -9,15 +9,15 @@ int ok_head(){ // cwd could be anywhere
     char cwd[MAX_ADR_NAME];
     if(getcwd(cwd, MAX_ADR_NAME) == NULL) return -1;
     chdir(repo_path);
-    int head, branch_head;
+    int now_head, branch_head;
     FILE *h=fopen("HEAD", "r");
-    fscanf(h, "%d", &head);
+    fscanf(h, "%d", &now_head);
     fclose(h);
     chdir(cnct("branches/", which_branch()));
     h=fopen("HEAD", "r");
     fscanf(h, "%d", &branch_head);
     chdir(cwd);
-    if(branch_head == head)
+    if(branch_head == now_head)
         return 1;
     return 0;
 }
