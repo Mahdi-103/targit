@@ -9,11 +9,11 @@
 #define MAX_NME_LNG 100
 char repo_path[MAX_ADR_NAME];
 
-int flecpy(FILE *paste, FILE *source){
-    char ch;
-    while((ch=getc(source)) != EOF)
-        fprintf(paste, "%c", ch);
-    return 0;
+char *fgetS(char *str, int __n, FILE *f){
+    char *res=fgets(str, __n, f);
+    if(res != NULL && strlen(str) && str[strlen(str)-1]=='\n')
+        str[strlen(str)-1]='\0';
+    return res;
 }
 
 char *cnct(const char *a, const char * b){
@@ -24,27 +24,10 @@ char *cnct(const char *a, const char * b){
     return c;
 }
 
-char *from_home(char *a){
-    static char adr[MAX_ADR_NAME];
-    int sz=strlen(getenv("HOME"));
-    memcpy(adr, getenv("HOME"), sz);
-    adr[sz]='/';
-
-    memcpy(adr+sz+1, a, strlen(a)+1);
-    return adr;
-}
-
-void deblank(char *s){
-    char *t=s;
-    while(1){
-        int x=0;
-        while(isspace(s[x])) ++x;
-        if(x) memmove(s, s+x, strlen(s+x)+1);
-        while(strlen(s) && !isspace(*s)) ++s;
-        if(strlen(s) == 0)
-            break;
-        ++s;   
-    }
+char *strcnct(char *res, const char *a, const char *b){
+    char *tmp_res=cnct(a, b);
+    memcpy(res, tmp_res, strlen(tmp_res)+1);
+    return res;
 }
 
 char *abs_path(char *path, const char *tmp_path){
@@ -84,6 +67,93 @@ char *abs_path(char *path, const char *tmp_path){
         path[strlen(path)-1]='\0';
     return path;
 }
+
+int flecpy(FILE *paste, FILE *source){
+    char ch;
+    while((ch=getc(source)) != EOF)
+        fprintf(paste, "%c", ch);
+    return 0;
+}
+
+void flecpy_path(char *paste, char *source){
+    FILE *pst=fopen(paste, "w");
+    FILE *src=fopen(source, "r");
+    flecpy(pst, src);
+    fclose(pst);
+    fclose(src);
+}
+
+int dircpy_opr(char *pst_path, char *src_name){
+    printf("fuck :: \n\t%s\n\t%s\n", pst_path, src_name);
+    char new_path[MAX_ADR_NAME];
+    strcnct(new_path, pst_path, "/");
+    if((access(cnct(new_path, src_name), F_OK) == 0) || (chdir(src_name) != 0))
+        return 1;
+    mkdir(strcnct(new_path, new_path, src_name), 0755);
+    DIR *dir=opendir(".");
+    struct dirent *entry;
+    while((entry=readdir(dir)) != NULL){
+        if(entry->d_type==8){
+            FILE *src=fopen(entry->d_name, "r");
+            char new_new[MAX_ADR_NAME];
+            strcnct(new_new, new_path, "/");
+            FILE *pst=fopen(cnct(new_new, entry->d_name), "w");
+            flecpy(pst, src);
+            fclose(src);
+            fclose(pst);
+        }
+        else if(strcmp(entry->d_name, ".") && strcmp(entry->d_name, "..")){
+            if(dircpy_opr(new_path, entry->d_name))
+                return 1;
+        }
+    }
+    chdir("..");
+    return 0;
+}
+
+int dircpy(char *pst_path, char *src_pth){
+    printf("%s %s\n", pst_path, src_pth);
+    char abs_pst[MAX_ADR_NAME], cwd[MAX_ADR_NAME], src_path[MAX_ADR_NAME];
+    if(getcwd(cwd, MAX_ADR_NAME) == 0) return 1;
+    printf("sahih\n");
+    if(abs_path(abs_pst, pst_path) == NULL) return 1;
+    printf("%s\n", abs_pst);
+    int sz=strlen(src_pth);
+    memcpy(src_path, src_pth, sz+1);
+    if(chdir(src_path) != 0) return 1;
+    chdir("..");
+    char *src_name=strtok(src_path, "/");
+    while(src_name+strlen(src_name) != src_path+sz)
+        src_name=strtok(NULL, "/");
+    printf("%s\n%s\n", abs_pst, src_name);
+    int ret_val=dircpy_opr(abs_pst, src_name);
+    chdir(cwd);
+    return ret_val;
+}
+
+char *from_home(char *a){
+    static char adr[MAX_ADR_NAME];
+    int sz=strlen(getenv("HOME"));
+    memcpy(adr, getenv("HOME"), sz);
+    adr[sz]='/';
+
+    memcpy(adr+sz+1, a, strlen(a)+1);
+    return adr;
+}
+
+void deblank(char *s){
+    char *t=s;
+    while(1){
+        int x=0;
+        while(isspace(s[x])) ++x;
+        if(x) memmove(s, s+x, strlen(s+x)+1);
+        while(strlen(s) && !isspace(*s)) ++s;
+        if(strlen(s) == 0)
+            break;
+        ++s;   
+    }
+}
+
 
 int wildcard_ok(const char *str, const char *name){
     if(*str=='\0')
@@ -200,7 +270,7 @@ int is_staged(char *path){//path must be absolute
             continue;
         char tmp_path[MAX_ADR_NAME];
         FILE *g=fopen(cnct(entry->d_name, "/file_path"), "r");
-        fscanf(g, "%s", tmp_path);
+        fgetS(tmp_path, MAX_ADR_NAME, g);
         if(strcmp(tmp_path, path) == 0){
             closedir(dir);
             fclose(g);

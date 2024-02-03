@@ -11,8 +11,15 @@ int init(){
     if(getcwd(dir_adr, MAX_ADR_NAME) == NULL) return 1;
     init_conf(dir_adr);
     if(mkdir("stage", 0755) != 0) return 1;
-    FILE *f=fopen("tracked", "w");
     if(mkdir("commits", 0755) != 0) return 1;
+    FILE *f=fopen("tracked", "w");
+    fclose(f);
+    f=fopen("HEAD", "w");
+    fprintf(f, "-1");
+    fclose(f);
+    f=fopen("commits/num", "w");
+    fprintf(f, "-1");
+    fclose(f);
     chdir("..");
     printf("The repo initialized successfully\n");
     return 0;

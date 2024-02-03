@@ -1,5 +1,15 @@
 #include "repo.c"
 
+int stage_empty(){ // cwd must be .targit
+    DIR *dir=opendir("stage");
+    struct dirent *entry;
+    int n=0;
+    while((entry=readdir(dir)) != NULL)
+        ++n;
+    closedir(dir);
+    return (n>2 ? 0 : 1);
+}
+
 int add_file_opr(char *path){ // cwd should be .targit and path is absolute
     FILE *f=fopen(path, "r");
     DIR *dir=opendir("stage");
@@ -12,7 +22,7 @@ int add_file_opr(char *path){ // cwd should be .targit and path is absolute
                     continue;
                 char tmp_path[MAX_ADR_NAME];
                 FILE *g=fopen(cnct(entry->d_name, "/file_path"), "r");
-                fscanf(g, "%s", tmp_path);
+                fgetS(tmp_path, MAX_ADR_NAME, g);
                 if(strcmp(tmp_path, path) == 0){
                     remove(cnct(entry->d_name, "/file"));
                     fclose(g);
@@ -32,7 +42,7 @@ int add_file_opr(char *path){ // cwd should be .targit and path is absolute
                 continue;
             char tmp_path[MAX_ADR_NAME];
             FILE *g=fopen(cnct(entry->d_name, "/file_path"), "r");
-            fscanf(g, "%s", tmp_path);
+            fgetS(tmp_path, MAX_ADR_NAME, g);
             if(strcmp(tmp_path, path) == 0){
                 fclose(g);
                 g=fopen(cnct(entry->d_name, "/file"), "w");
@@ -137,7 +147,7 @@ void redo_opr(){//currently in stage/i
     char cwd[MAX_ADR_NAME], tmp_path[MAX_ADR_NAME];
     if(getcwd(cwd, MAX_ADR_NAME) == NULL) exit(1);
     FILE *f_p=fopen(cnct(cwd, "/file_path"), "r");
-    fscanf(f_p, "%s", tmp_path);
+    fgetS(tmp_path, MAX_ADR_NAME, f_p);
     fclose(f_p);
     int sz=strlen(tmp_path);
     char *name=strtok(tmp_path, "/");
@@ -230,8 +240,4 @@ int add(int argc, char *argv[]){
         }
     }
     return 0;
-}
-
-int main(int argc, char *argv[]){
-    add(argc, argv);
 }
