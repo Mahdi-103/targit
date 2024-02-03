@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "repo.c"
-#include "errno.h"
 
 void init_conf(char *dir_adr){
     char conf[MAX_ADR_NAME];

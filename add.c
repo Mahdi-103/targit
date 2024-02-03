@@ -1,4 +1,4 @@
-#include "repo.c"
+#include "config.c"
 
 int stage_empty(){ // cwd must be .targit
     DIR *dir=opendir("stage");
@@ -217,12 +217,25 @@ int add(int argc, char *argv[]){
         perror("The repo is not initialized\n");
         return 1;
     }
+    if(argc == 2){
+        printf("Invalid command\n");
+        return 1;
+    }
     if(strcmp(argv[2], "-n") == 0){
+        if(argc!=4){
+            printf("Invalid command\n");
+            return 1;
+        }
         lst(0, atoi(argv[3]));
         return 0;
     }
-    else if(strcmp(argv[2], "-redo") == 0)
+    else if(strcmp(argv[2], "-redo") == 0){
+        if(argc!=3){
+            printf("Invalid command\n");
+            return 1;
+        }
         return redo();
+    }
     else{
         int x=2;
         if(strcmp(argv[2], "-f") == 0)

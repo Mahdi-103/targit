@@ -1,4 +1,4 @@
-#include "config.c"
+#include "commit.c"
 
 int init(){
     if(where_is_inited() != NULL){
@@ -12,6 +12,8 @@ int init(){
     init_conf(dir_adr);
     if(mkdir("stage", 0755) != 0) return 1;
     if(mkdir("commits", 0755) != 0) return 1;
+    if(mkdir("shortcuts", 0755) != 0) return 1;
+    if(mkdir("shortcuts/message", 0755) != 0) return 1;
     FILE *f=fopen("tracked", "w");
     fclose(f);
     f=fopen("HEAD", "w");
