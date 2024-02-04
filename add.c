@@ -35,11 +35,13 @@ int add_file_opr(char *path){ // cwd should be .targit and path is absolute
         }
         else return 2;
     }
+    int num=0;
     if(is_tracked(path)){
         chdir("stage");
         while((entry=readdir(dir)) != NULL){
             if(*entry->d_name == '.')
                 continue;
+            ++num;
             char tmp_path[MAX_ADR_NAME];
             FILE *g=fopen(cnct(entry->d_name, "/file_path"), "r");
             fgetS(tmp_path, MAX_ADR_NAME, g);
@@ -54,28 +56,27 @@ int add_file_opr(char *path){ // cwd should be .targit and path is absolute
                 return 0;
             }
         }
-        return 1;
     }
     else{
+        num=-2;
         track(path);
-        char name[100];
-        int num=0;
         while((entry=readdir(dir)) != NULL)
             ++num;
-        sprintf(name, "%d", num-2);
-        chdir("stage");
-        if(mkdir(name, 0755) != 0) return 1;
-        chdir(name);
-        FILE *g=fopen("file_path", "w");
-        fprintf(g, "%s", path);
-        fclose(g);
-        g=fopen("file", "w");
-        flecpy(g, f);
-        chdir("../..");
-        fclose(g);
-        fclose(f);
-        closedir(dir);
     }
+    char name[100];
+    sprintf(name, "%d", num);
+    chdir("stage");
+    if(mkdir(name, 0755) != 0) return 1;
+    chdir(name);
+    FILE *g=fopen("file_path", "w");
+    fprintf(g, "%s", path);
+    fclose(g);
+    g=fopen("file", "w");
+    flecpy(g, f);
+    chdir("../..");
+    fclose(g);
+    fclose(f);
+    closedir(dir);
     return 0;
 }
 
