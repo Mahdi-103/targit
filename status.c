@@ -6,12 +6,15 @@ void status_here(char *path){ // show status for path
     char tmp_path[MAX_ADR_NAME];
     while(fgetS(tmp_path, MAX_ADR_NAME, t) != NULL){
         if(strncmp(path, tmp_path, strlen(path)) == 0){
+            char sts = file_status(tmp_path);
+            if(sts == '\0')
+                continue;
             printf("%s : ", tmp_path+strlen(path)+1);
             if(is_staged(tmp_path))
                 printf("+");
             else 
                 printf("-");
-            printf("%c\n", file_status(tmp_path));
+            printf("%c\n", sts);
         }
     }
 }
@@ -33,7 +36,3 @@ int show_status(int argc, char *argv[]){
     status_here(cwd);
     return 0;
 }
-/*
-int main(int argc, char *argv[]){
-    show_status(argc, argv);
-}*/
