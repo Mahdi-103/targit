@@ -52,8 +52,7 @@ void restore(int id){ //cwd must be .targit/commits
 }
 
 int go_to(int id){ //cwd must be .targit
-    if(!stage_empty()) return 2;
-    if(access(cnct("commits/", itos(id)), F_OK) != 0) return 3;
+    if(access(cnct("commits/", itos(id)), F_OK) != 0) return 10;
     chdir(cnct("commits/", itos(id)));
     FILE *t=fopen("../../tracked", "r");
     char path[MAX_ADR_NAME];
@@ -70,6 +69,61 @@ int go_to(int id){ //cwd must be .targit
     flecpy_path("../../tracked", "tracked");
     chdir("..");
     restore(id);
+    return 0;
+}
+
+int checkout_opr(int argc, char *argv[]){ // cwd must be .targit
+    if(argc != 3) return 2;
+    if(!stage_empty()) return 3;
+    int id;
+    char branch[MAX_NME_LNG], path[MAX_ADR_NAME];
+    if(strcmp(argv[2], "HEAD") == 0){
+        if(argc > 3) return 2;
+        FILE *f=fopen("current_branch", "r");
+        fgetS(branch, MAX_NME_LNG, f);
+        fclose(f);
+        chdir(cnct("branches/", branch));
+        f=fopen("HEAD", "r");
+        fscanf(f, "%d", &id);
+        fclose(f);
+        chdir("../..");
+        return go_to(id);
+    }
+    if(strncmp(argv[2], "HEAD-", 5) == 0){
+        int n, lst_id;
+        sscanf(argv[2], "HEAD-%d", &n);
+        FILE *f=fopen("current_branch", "r");
+        fgetS(branch, MAX_NME_LNG, f);
+        fclose(f);
+        chdir(cnct("branches/", branch));
+        f=fopen("HEAD", "r");
+        fscanf(f, "%d", &id);
+        fclose(f);
+        f=fopen("first_commit", "r");
+        fscanf(f, "%d", &lst_id);
+        fclose(f);
+        chdir("../..");
+        for(int i=0;i<n;++i){
+            id=par_com(id);
+            if(id == lst_id && i < n-1)
+                return 5;
+        }
+        return go_to(id);
+    }
+    if((access(cnct("commits/", argv[2]), F_OK) == 0) && is_dir(cnct("commits/", argv[2])))
+        return go_to(atoi(argv[2]));
+    if(access(cnct("branches/", argv[2]), F_OK) == 0){
+        FILE *f=fopen("current_branch", "w");
+        fprintf(f, "%s", argv[2]);
+        fclose(f);
+        chdir(cnct("branches/", argv[2]));
+        f=fopen("HEAD", "r");
+        fscanf(f, "%d", id);
+        fclose(f);
+        chdir("../..");
+        return go_to(id);
+    }
+    return 4; //0 if ok, 2 if invalid, 3 if unempty stage, 4 if no brn nor com
 }
 
 int checkout(int argc, char *argv[]){
@@ -77,5 +131,16 @@ int checkout(int argc, char *argv[]){
         printf("The repo is not initialized\n");
         return 1;
     }
-    
+    int retr=checkout_opr(argc, argv);
+    if(retr == 0)
+        printf("Checkout done!\n");
+    else if(retr == 2)
+        printf("Invalid command\n");
+    else if(retr == 3)
+        printf("The staging area is unempty\nPlease commit or reset the files\n");
+    else if(retr == 4)
+        printf("There is no commit id nor branch name as %s\n", argv[2]);
+    else if(retr == 5)
+        printf("The head doesn't have as much as n parents in its branch");
+    return retr;
 }
