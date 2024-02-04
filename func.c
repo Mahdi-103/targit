@@ -22,6 +22,12 @@ char *head(){ // cwd could be anywhere
     return the_head;
 }
 
+int max(int a, int b){
+    if(a>b)
+        return a;
+    return b;
+}
+
 char *fgetS(char *str, int __n, FILE *f){
     char *res=fgets(str, __n, f);
     if(res != NULL && strlen(str) && str[strlen(str)-1]=='\n')

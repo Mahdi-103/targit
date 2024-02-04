@@ -41,7 +41,7 @@ int add_file_opr(char *path){ // cwd should be .targit and path is absolute
         while((entry=readdir(dir)) != NULL){
             if(*entry->d_name == '.')
                 continue;
-            ++num;
+            num=max(num, atoi(entry->d_name)+1);
             char tmp_path[MAX_ADR_NAME];
             FILE *g=fopen(cnct(entry->d_name, "/file_path"), "r");
             fgetS(tmp_path, MAX_ADR_NAME, g);
@@ -58,10 +58,12 @@ int add_file_opr(char *path){ // cwd should be .targit and path is absolute
         }
     }
     else{
-        num=-2;
+        num=0;
         track(path);
-        while((entry=readdir(dir)) != NULL)
-            ++num;
+        while((entry=readdir(dir)) != NULL){
+            if(*entry->d_name != '.')
+                num=max(num, atoi(entry->d_name)+1);
+        }
     }
     char name[100];
     sprintf(name, "%d", num);
@@ -243,8 +245,13 @@ int add(int argc, char *argv[]){
     }
     else{
         int x=2;
-        if(strcmp(argv[2], "-f") == 0)
+        if(strcmp(argv[2], "-f") == 0){
             ++x;
+            if(argc==3){
+                printf("Please enter file and directory paths\n");
+                return 1;
+            }
+        }
         for(int i=x;i<argc;++i){
             int hh=add_dir_fle(argv[i]);
             if(hh == 0)
