@@ -339,14 +339,14 @@ int is_staged(char *path){
     return ok;
 }
 
-char *par_com(char *id){
+int par_com(int id){
     char path[MAX_ADR_NAME];
-    static char ans[10];
+    int ans;
     strcnct(path, repo_path, "/commits/");
-    strcnct(path, path, id);
+    strcnct(path, path, itos(id));
     if((access(path, F_OK) != 0) || !is_dir(path)) return -2;
     FILE *f=fopen(cnct(path, "/par"), "r");
-    fgetS(ans, 10, f);
+    fscanf(f, "%d", &ans);
     fclose(f);
     return ans;
 }
@@ -425,8 +425,23 @@ char *write_time(char *path){
     time(&rawtime);
     time_info=localtime(&rawtime);
     static char cur_time[100];
-    sprintf(cur_time, "%d/%d/%d %d:%d:%d", time_info->tm_year+1900, time_info->tm_mon+1,
-            time_info->tm_mday, time_info->tm_hour, time_info->tm_min, time_info->tm_sec);
+    memset(cur_time, 0, 100);
+    sprintf(cur_time, "%d/", time_info->tm_year+1900);
+    if(time_info->tm_mon+1<10)
+        sprintf(cur_time+strlen(cur_time), "0");
+    sprintf(cur_time+strlen(cur_time), "%d/", time_info->tm_mon+1);
+    if(time_info->tm_mday<10)
+        sprintf(cur_time+strlen(cur_time), "0");
+    sprintf(cur_time+strlen(cur_time), "%d ", time_info->tm_mday);
+    if(time_info->tm_hour<10)
+        sprintf(cur_time+strlen(cur_time), "0");
+    sprintf(cur_time+strlen(cur_time), "%d:", time_info->tm_hour);
+    if(time_info->tm_min<10)
+        sprintf(cur_time+strlen(cur_time), "0");
+    sprintf(cur_time+strlen(cur_time), "%d:", time_info->tm_min);
+    if(time_info->tm_sec<10)
+        sprintf(cur_time+strlen(cur_time), "0");
+    sprintf(cur_time+strlen(cur_time), "%d", time_info->tm_sec);
     if(path != NULL){
         FILE *f=fopen(path, "w");
         fprintf(f, "%s", cur_time);

@@ -17,5 +17,6 @@ int main(int argc, char *argv[]){
             return commit(argc, argv);
     else if(strcmp(argv[1], "status") == 0) return show_status(argc, argv);
     else if(strcmp(argv[1], "branch") == 0) return branch(argc, argv);
+    else if(strcmp(argv[1], "log") == 0) return logg(argc, argv);
     else return cmd_err();
 }
