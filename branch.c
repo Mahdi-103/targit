@@ -1,15 +1,15 @@
 #include "status.c"
 
-int new_branch(char *name){
+int new_branch(char *name){ // changes current branch or not?
     char cwd[MAX_ADR_NAME];
     if(getcwd(cwd, MAX_ADR_NAME) == NULL) return 1;
     chdir(cnct(repo_path, "/branches"));
     if(access(name, F_OK) == 0) return 2;
     if(mkdir(name, 0755) != 0) return 1;
-    FILE *f=fopen("../current_branch", "w");
+    FILE *f/*=fopen("../current_branch", "w");
     fprintf(f, "%s", name);
     fclose(f);
-    chdir(name);
+    chdir(name)*/;
     f=fopen("first_commit", "w");
     fprintf(f, "%s", head());
     fclose(f);

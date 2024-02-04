@@ -215,7 +215,11 @@ void lst_stage(int i, int n){//lists files in cwd till depth n
 
 int add(int argc, char *argv[]){
     if((where_is_inited()) == NULL){
-        perror("The repo is not initialized\n");
+        printf("The repo is not initialized\n");
+        return 1;
+    }
+    if(ok_head() != 1){
+        printf("You must be on HEAD of project to add\n");
         return 1;
     }
     if(argc == 2){

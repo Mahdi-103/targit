@@ -5,23 +5,6 @@ struct commit_info{
     char *cur_time, *msg;
 };
 
-int ok_head(){ // cwd could be anywhere
-    char cwd[MAX_ADR_NAME];
-    if(getcwd(cwd, MAX_ADR_NAME) == NULL) return -1;
-    chdir(repo_path);
-    int now_head, branch_head;
-    FILE *h=fopen("HEAD", "r");
-    fscanf(h, "%d", &now_head);
-    fclose(h);
-    chdir(cnct("branches/", which_branch()));
-    h=fopen("HEAD", "r");
-    fscanf(h, "%d", &branch_head);
-    chdir(cwd);
-    if(branch_head == now_head)
-        return 1;
-    return 0;
-}
-
 int new_commit_id(){ // cwd is .targit/commits
     int id;
     FILE *num=fopen("num", "r");
