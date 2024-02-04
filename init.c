@@ -1,4 +1,4 @@
-#include "reset.c"
+#include "tag.c"
 
 
 int init(){
@@ -11,6 +11,7 @@ int init(){
     char dir_adr[MAX_ADR_NAME];
     if(getcwd(dir_adr, MAX_ADR_NAME) == NULL) return 1;
     init_conf(dir_adr);
+    if(mkdir("tags", 0755) != 0) return 1;
     if(mkdir("stage", 0755) != 0) return 1;
     if(mkdir("commits", 0755) != 0) return 1;
     if(mkdir("branches", 0755) != 0) return 1;
