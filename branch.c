@@ -8,8 +8,8 @@ int new_branch(char *name){ // changes current branch or not?
     if(mkdir(name, 0755) != 0) return 1;
     FILE *f/*=fopen("../current_branch", "w");
     fprintf(f, "%s", name);
-    fclose(f);
-    chdir(name)*/;
+    fclose(f)*/;
+    chdir(name);
     f=fopen("first_commit", "w");
     fprintf(f, "%s", head());
     fclose(f);

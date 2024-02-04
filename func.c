@@ -314,7 +314,7 @@ int is_same(const char *path_f, const char *path_g){
     return 0; // 0 if same, 1 if g modified, 2 if g deleted, 3 if g T(dastresi)
 }
 
-int is_staged(char *path){
+int is_staged(const char *path){
     char cwd[MAX_ADR_NAME], abs_p[MAX_ADR_NAME];
     if(getcwd(cwd, MAX_ADR_NAME) == NULL) return 2;
     if((path = abs_path(abs_p, path)) == NULL) return 2;
@@ -409,7 +409,7 @@ void remove_dir_here(){ // makes the cwd empty
     }
 }
 
-int remove_dir(char *path){
+int remove_dir(const char *path){
     char cwd[MAX_ADR_NAME];
     if(getcwd(cwd, MAX_ADR_NAME) == NULL) return 1;
     chdir(path);
@@ -419,7 +419,7 @@ int remove_dir(char *path){
     return 0;
 }
 
-int delete(char *path){
+int delete(const char *path){
     if(access(path, F_OK) != 0)
         return 1;
     if(is_dir(path))
@@ -428,7 +428,7 @@ int delete(char *path){
         return remove(path);
 }
 
-char *write_time(char *path){
+char *write_time(const char *path){
     time_t rawtime;
     struct tm *time_info;
     time(&rawtime);

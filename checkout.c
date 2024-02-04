@@ -118,7 +118,7 @@ int checkout_opr(int argc, char *argv[]){ // cwd must be .targit
         fclose(f);
         chdir(cnct("branches/", argv[2]));
         f=fopen("HEAD", "r");
-        fscanf(f, "%d", id);
+        fscanf(f, "%d", &id);
         fclose(f);
         chdir("../..");
         return go_to(id);
@@ -131,6 +131,7 @@ int checkout(int argc, char *argv[]){
         printf("The repo is not initialized\n");
         return 1;
     }
+    chdir(repo_path);
     int retr=checkout_opr(argc, argv);
     if(retr == 0)
         printf("Checkout done!\n");
