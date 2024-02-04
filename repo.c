@@ -1,4 +1,4 @@
-#include "logs.c"
+#include "pre.c"
 
 char *where_is_inited(){
     char adr[MAX_ADR_NAME], tmp_adr[MAX_ADR_NAME];

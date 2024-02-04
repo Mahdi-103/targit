@@ -169,6 +169,12 @@ int dircpy(char *pst_path, char *src_pth){
     return ret_val;
 }
 
+char *itos(int x){
+    static char res[10];
+    sprintf(res, "%d", x);
+    return res;
+}
+
 char *from_home(const char *a){
     static char adr[MAX_ADR_NAME];
     int sz=strlen(getenv("HOME"));
@@ -191,7 +197,6 @@ void deblank(char *s){
         ++s;   
     }
 }
-
 
 int wildcard_ok(const char *str, const char *name){
     if(*str=='\0')
@@ -334,6 +339,18 @@ int is_staged(char *path){
     return ok;
 }
 
+char *par_com(char *id){
+    char path[MAX_ADR_NAME];
+    static char ans[10];
+    strcnct(path, repo_path, "/commits/");
+    strcnct(path, path, id);
+    if((access(path, F_OK) != 0) || !is_dir(path)) return -2;
+    FILE *f=fopen(cnct(path, "/par"), "r");
+    fgetS(ans, 10, f);
+    fclose(f);
+    return ans;
+}
+
 char file_status(const char *path){
     char abs_p[MAX_ADR_NAME], cwd[MAX_ADR_NAME], commit_id[10];
     if((path = abs_path(abs_p, path)) == NULL) exit(1);
@@ -410,8 +427,10 @@ char *write_time(char *path){
     static char cur_time[100];
     sprintf(cur_time, "%d/%d/%d %d:%d:%d", time_info->tm_year+1900, time_info->tm_mon+1,
             time_info->tm_mday, time_info->tm_hour, time_info->tm_min, time_info->tm_sec);
-    FILE *f=fopen(path, "w");
-    fprintf(f, "%s", cur_time);
-    fclose(f);
+    if(path != NULL){
+        FILE *f=fopen(path, "w");
+        fprintf(f, "%s", cur_time);
+        fclose(f);
+    }
     return cur_time;
 }

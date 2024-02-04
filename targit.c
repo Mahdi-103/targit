@@ -7,7 +7,7 @@ int cmd_err(){
 }
 
 int main(int argc, char *argv[]){
-    log_check();
+    pre_check();
     if(argc<2) return cmd_err();
     else if(argc == 2 && strcmp(argv[1], "init") == 0) return init();
     else if(strcmp(argv[1], "config") == 0) return conf(argc, argv);

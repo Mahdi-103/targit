@@ -1,6 +1,6 @@
 #include "func.c"
 
-void log_check(){
+void pre_check(){
     char *adr=from_home("/.targits");
     DIR *dir=opendir(adr);
     if(dir!=NULL) return;
