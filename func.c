@@ -11,7 +11,7 @@
 #define MAX_NME_LNG 100
 char repo_path[MAX_ADR_NAME], the_head[10], branch_name[MAX_NME_LNG];
 
-char *head(){ 
+char *head(){ // cwd could be anywhere
     char cwd[MAX_ADR_NAME];
     if(getcwd(cwd, MAX_ADR_NAME) == NULL) return NULL;
     chdir(repo_path);
@@ -50,7 +50,7 @@ char *which_branch(){
     return branch_name;
 }
 
-int is_dir(char *path){
+int is_dir(const char *path){
     DIR *dir=opendir(path);
     if(dir){
         closedir(dir);
@@ -59,7 +59,7 @@ int is_dir(char *path){
     return 0;
 }
 
-int contains_line(char *path, char *str){
+int contains_line(char *path, const char *str){
     if(access(path, F_OK) != 0 || is_dir(path))
         return -1;
     char ln[MAX_ADR_NAME];
@@ -169,7 +169,7 @@ int dircpy(char *pst_path, char *src_pth){
     return ret_val;
 }
 
-char *from_home(char *a){
+char *from_home(const char *a){
     static char adr[MAX_ADR_NAME];
     int sz=strlen(getenv("HOME"));
     memcpy(adr, getenv("HOME"), sz);
@@ -247,7 +247,7 @@ int wildcard_ok(const char *str, const char *name){
     }
 }
 
-int in_repo(char *path){
+int in_repo(const char *path){
     if(strncmp(path, repo_path, strlen(repo_path)-7) == 0) return 1;
     return 0;
 }
@@ -273,7 +273,7 @@ void track(const char *path){
     fclose(f);
 }
 
-int is_ok_dir(char *name){
+int is_ok_dir(const char *name){
     if(strcmp(name, ".") == 0)
         return 0;
     if(strcmp(name, "..") == 0)
@@ -283,7 +283,7 @@ int is_ok_dir(char *name){
     return 1;
 }
 
-int is_same(char *path_f, char *path_g){
+int is_same(const char *path_f, const char *path_g){
     if(is_dir(path_f) || is_dir(path_g))
         return -1;
     if(access(path_f, F_OK) != 0){
@@ -334,34 +334,42 @@ int is_staged(char *path){
     return ok;
 }
 
-char file_status(char *path){
-    char abs_p[MAX_ADR_NAME], cwd[MAX_ADR_NAME], ret_val;
+char file_status(const char *path){
+    char abs_p[MAX_ADR_NAME], cwd[MAX_ADR_NAME], commit_id[10];
     if((path = abs_path(abs_p, path)) == NULL) exit(1);
     if(getcwd(cwd, MAX_ADR_NAME) == NULL) exit(1);
-    chdir(repo_path);
-    if(strcmp(head(), "-1") == 0){
+    chdir(cnct(repo_path, "/commits"));
+    if((strcmp(head(), "-1") == 0) || (contains_line(cnct(the_head, "/tracked"), path) != 1)){
         chdir(cwd);
         return 'A';
     }
-    chdir(cnct("commits/", the_head));
-    if(contains_line("tracked", path) != 1){
-        chdir(cwd);
-        return 'A';
-    }
-    chdir("stage");
-    DIR *dir=opendir(".");
-    struct dirent *entry;
-    int res;
-    while((entry=readdir(dir)) != NULL){
-        if(entry->d_name[0] != '.'){
-            chdir(entry->d_name);
-            if(contains_line("file_path", path)){
-                res=is_same("file", path);
-                break;
+    int res=-1;
+    memcpy(commit_id, the_head, strlen(the_head)+1);
+    do{
+        chdir(cnct(commit_id, "/stage"));
+        DIR *dir=opendir(".");
+        struct dirent *entry;
+        while((entry=readdir(dir)) != NULL){
+            if(entry->d_name[0] != '.'){
+                chdir(entry->d_name);
+                if(contains_line("file_path", path)){
+                    res=is_same("file", path);
+                    break;
+                }
+                chdir("..");
             }
         }
-    }
+        closedir(dir);
+        if(res != -1)
+            break;
+        FILE *pr=fopen("../par", "r");
+        fscanf(pr, "%s", commit_id);
+        fclose(pr);
+        chdir("../..");
+    }while(strcmp(commit_id, "-1"));
     chdir(cwd);
+    if(res == -1)
+        exit(1);
     if(res == 1)
         return 'M';
     if(res == 2)

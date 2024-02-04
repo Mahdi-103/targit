@@ -1,5 +1,6 @@
 #include "branch.c"
 
+
 int init(){
     if(where_is_inited() != NULL){
         printf("The repo is already initialized\n");

@@ -129,6 +129,9 @@ struct commit_info *commit_opr(int argc, char *argv[]){ // cwd is .targit
     FILE *f=fopen("par", "w");
     fprintf(f, "%d", upd_head(ret.id));
     fclose(f);
+    f=fopen("branch", "w");
+    fprintf(f, "%s", branch_name);
+    fclose(f);
     f=fopen("message", "w");
     fprintf(f, "%s", msg);
     fclose(f);

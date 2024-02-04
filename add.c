@@ -136,7 +136,7 @@ int add_dir_fle(char *path){ // adds from anywhere and path could be either abso
     if(getcwd(cwd, MAX_ADR_NAME) == NULL) return 1;
     if(abs_path(abs_p, path) == NULL)   return 1;
     if(in_repo(abs_p) == 0) return 3;
-    if(strcmp(abs_p+(strlen(abs_p)-7), ".tragit") == 0) return 4;
+    if(strcmp(abs_p+(strlen(abs_p)-7), ".targit") == 0) return 4;
     chdir(repo_path);
     int res=add_dir_fle_opr(abs_p);
     chdir(cwd);
