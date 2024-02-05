@@ -283,7 +283,7 @@ int is_tracked(const char *path){
     char tmp_path[MAX_ADR_NAME], abs_p[MAX_ADR_NAME];
     path=abs_path(abs_p, path);
     int res=0;
-    while(fscanf(f, "%s", tmp_path) != EOF){
+    while(fgetS(tmp_path, MAX_ADR_NAME, f) != NULL){
         if(strcmp(tmp_path, path) == 0){
             res=1;
             break;

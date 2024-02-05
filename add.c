@@ -11,7 +11,11 @@ int stage_empty(){ // cwd must be .targit
 }
 
 int add_file_opr(char *path){ // cwd should be .targit and path is absolute
+    printf("fuck :%s\n", path);
     FILE *f=fopen(path, "r");
+    printf("aahs");
+    if(f!=NULL)
+        printf("realy?\n");
     DIR *dir=opendir("stage");
     struct dirent *entry;    
     if(f == NULL){
@@ -110,15 +114,22 @@ void add_dir_oex(){ // adds existing files in cwd and its subtree
 
 int add_dir_fle_opr(char *path){ // cwd should be .targit and path is absolute
     FILE *t=fopen("tracked", "r");
+    printf("aha\n");
     char tmp_path[MAX_ADR_NAME];
     int ok=0, res=2;
-    while(fscanf(t, "%s", tmp_path) != EOF){
+    int z = 0;
+    while(fgetS(tmp_path, MAX_ADR_NAME, t) != NULL){
+        printf("%s\n", tmp_path);
         if(strncmp(tmp_path, path, strlen(path)) == 0){
             res=add_file_opr(tmp_path);
             ok=(strlen(tmp_path)==strlen(path));
         }
+        ++z;
+        if(z == 10)
+        exit(1);
     }
     fclose(t);
+    printf("fuck \n");
     if(ok) return res;
     if(is_dir(path)){
         chdir(path);
@@ -141,6 +152,7 @@ int add_dir_fle(char *path){ // adds from anywhere and path could be either abso
     if(in_repo(abs_p) == 0) return 3;
     if(strcmp(abs_p+(strlen(abs_p)-7), ".targit") == 0) return 4;
     chdir(repo_path);
+    printf("khob :: %s\n", abs_p);
     int res=add_dir_fle_opr(abs_p);
     chdir(cwd);
     return res;//returns 3 if out of repo, 2 if not existed, 1 if unexpected error, 0 if ok

@@ -49,7 +49,7 @@ void glob_upd_conf(char *usr, char *eml){
     FILE *f=fopen(from_home("/.targits/repos"), "r");
     if(f == NULL) exit(1);
     char dir_adr[MAX_ADR_NAME];
-    while(fscanf(f, "%s", dir_adr) != EOF)
+    while(fgetS(dir_adr, MAX_ADR_NAME, f) != NULL)
         upd_conf(dir_adr, usr, eml);
     fclose(f);
 }
