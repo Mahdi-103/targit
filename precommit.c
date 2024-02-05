@@ -3,10 +3,10 @@ char res_hook_check[10000];
 #define rhc res_hook_check+strlen(res_hook_check)
 
 int todo_check(char *path){
-    if(0 == NULL) printf("%d", 1/0);
     int ret = 0;
     FILE *f=fopen(path, "r");
     char *ff=frmt(path);
+    printf("wtf :: %s\n", ff);
     if(strcmp(ff, "txt") == 0){
         char ln[10000];
         while(fgetS(ln, 10000, f) != NULL){
@@ -151,7 +151,8 @@ int time_limit(char *path){
     return ret;// 0 if pass, 2 if fail, 3 if skip
 }
 
-int add_hook(char *name){ //cwd is .targitc
+int add_hook(char *name){ //cwd is .targit
+    chdir(repo_path);
     chdir("Hooks");
     if(access(name, F_OK)) return 2;
     if(contains_line(name, "ON")) return 3;
@@ -162,7 +163,8 @@ int add_hook(char *name){ //cwd is .targitc
     return 0;
 }
 
-int rem_hook(char *name){ //cwd is .targitc
+int rem_hook(char *name){ //cwd is .targit
+    chdir(repo_path);
     chdir("Hooks");
     if(access(name, F_OK)) return 2;
     if(contains_line(name, "OFF")) return 4;
@@ -173,24 +175,31 @@ int rem_hook(char *name){ //cwd is .targitc
     return 0;
 }
 
-int lst_hook(int all){ //cwd is .targitc
+int lst_hook(int all, int chap){ //cwd could be anywhere
+    char cwd[MAX_ADR_NAME];
+    if(getcwd(cwd, MAX_ADR_NAME) == NULL) return 1;
+    chdir(repo_path);
     chdir("Hooks");
     DIR *dir=opendir(".");
     struct dirent *entry;
+    int ret = 2;
     while((entry = readdir(dir)) != NULL){
         if(!is_dir(entry->d_name)){
-            if(all || contains_line(entry->d_name, "ON"))
-                printf("%s\n", entry->d_name);
+            if(all || contains_line(entry->d_name, "ON")){
+                if(chap)
+                    printf("%s\n", entry->d_name);
+                ret = 0;
+            }
         }
     }
     closedir(dir);
-    chdir("..");
-    return 0;
+    chdir(cwd);
+    return ret;
 }
 
 void prnt_natije(char *prnt, char *hook_name, int ret){
     sprintf(prnt, "\"");
-    sprintf(prnt+1, hook_name);
+    sprintf(prnt+1, "%s", hook_name);
     sprintf(prnt+strlen(prnt), "\"");
     char retr[20];
     if(ret == 0) memcpy(retr, "PASSED", 7);
@@ -201,14 +210,17 @@ void prnt_natije(char *prnt, char *hook_name, int ret){
     sprintf(prnt+strlen(prnt), "%s\n", retr);
 }
 
-int hook_check(char *path, int stg){ // path is not absolute
-    char abs_P[MAX_ADR_NAME];
+int hook_check(char *path, int stg){ //cwd is anywhere and path is not absolute
+    char abs_P[MAX_ADR_NAME], cwd[MAX_ADR_NAME];
+    if(getcwd(cwd, MAX_ADR_NAME) == NULL) return 1;
+    if(lst_hook(0, 0))  return 5;
     if((path = abs_path(abs_P, path)) == NULL) return 1;
-    if(access(path, F_OK)) return 2;
+    if(access(path, F_OK) || is_dir(path)) return 2;
     if(!stg){
         if(!in_repo(path)) return 3;
         if(!is_staged(path)) return 4;
     }
+    chdir(repo_path);
     chdir("Hooks");
     memset(res_hook_check, 0, 10000);
     if(contains_line("todo-check", "ON"))
@@ -225,11 +237,12 @@ int hook_check(char *path, int stg){ // path is not absolute
         prnt_natije(rhc, "static-error-check", static_error_check(path));
     if(contains_line("file-size-check", "ON"))
         prnt_natije(rhc, "file-size-check", file_size_check(path));
-    if(contains_line("charater-limit", "ON"))
+    if(contains_line("character-limit", "ON"))
         prnt_natije(rhc, "character-limit", character_limit(path));
     if(contains_line("time-limit", "ON"))
         prnt_natije(rhc, "time-limit", time_limit(path));
-    return 0;
+    chdir(cwd);
+    return 0; // 0 if ok, 2 if doesn't exit, 3 if out of repo, 4 if not staged
 }
 
 int precommit(int argc, char *argv[]){
@@ -237,41 +250,94 @@ int precommit(int argc, char *argv[]){
         printf("The repo is not initialized\n");
         return 1;
     }
-    chdir(repo_path);
     if(argc == 2){
+        chdir(repo_path);
+        if(stage_empty()){
+            printf("There is no staged file to be checked\n");
+            return 0;
+        }
+        if(lst_hook(0, 0)){
+            printf("No applied hook\n");
+            return 0;
+        }
+        chdir("stage");
+        DIR *dir = opendir(".");
+        struct dirent *entry;
+        while((entry = readdir(dir)) != NULL){
+            if(is_ok_dir(entry->d_name)){
+                chdir(entry->d_name);
+                hook_check("file", 1);
+                if(strlen(res_hook_check)){
+                    char path_repo[MAX_ADR_NAME];
+                    FILE *f=fopen("file_path", "r");
+                    fgetS(path_repo, MAX_ADR_NAME, f);
+                    fclose(f);
+                    printf("\"%s\":\n%s\n", path_repo+strlen(repo_path)-7, res_hook_check);
+                }
+                chdir("..");
+            }
+        }
         return 0;
     }
+    int retr;
     if(strcmp(argv[2], "-u") == 0){
         return 0;
     }
-    if(strcmp(argv[2], "hooks") == 0){
+    else if(strcmp(argv[2], "hooks") == 0){
         if(argc != 4 || strcmp(argv[3], "list")){
             printf("Invalid command\n");
             return 1;
         }
-        return lst_hook(1);
+        return lst_hook(1, 1);
     }
-    if(strcmp(argv[2], "applied") == 0){
+    else if(strcmp(argv[2], "applied") == 0){
         if(argc != 4 || strcmp(argv[3], "hooks")){
             printf("Invalid command\n");
             return 1;
         }
-        return lst_hook(0);
+        if(lst_hook(0, 1))
+            printf("No applied hook\n");
+        return 0;
     }
-    int retr;
-    if(strcmp(argv[2], "add") == 0){
+    else if(strcmp(argv[2], "add") == 0){
+        chdir(repo_path);
         if(argc != 5 || strcmp(argv[3], "hook")){
             printf("Invalid command\n");
             return 1;
         }
         retr = add_hook(argv[4]);
     }
-    if(strcmp(argv[2], "remove") == 0){
+    else if(strcmp(argv[2], "remove") == 0){
+        chdir(repo_path);
         if(argc != 5 || strcmp(argv[3], "hook")){
             printf("Invalid command\n");
             return 1;
         }
         retr = rem_hook(argv[4]);
+    }
+    else if(strcmp(argv[2], "-f") == 0){
+        if(argc == 3){
+            printf("Please enter the file names\n");
+            return 1;
+        }
+        if(lst_hook(0, 0)){
+            printf("No applied hook\n");
+            return 0;
+        }
+        for(int i = 3 ; i < argc ; ++i){
+            retr = hook_check(argv[i], 0);
+            if(retr == 0)
+                printf("\"%s\":\n%s\n", argv[i], res_hook_check);
+            else if(retr == 2)
+                printf("No file which path is %s\n", argv[i]);
+            else if(retr == 3)
+                printf("%s is out of repository\n", argv[i]);
+            else if(retr == 4)
+                printf("%s has changes that are not staged\n", argv[i]);
+            else
+                exit(1);
+        }
+        return 0;
     }
     if(retr == 0)
         printf("Applied hooks updated succefully\n");

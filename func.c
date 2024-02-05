@@ -76,7 +76,7 @@ char *frmt(char *path){
         --x;
     }
     if(path[x]=='.')
-        return path+x;
+        return path+x+1;
     return path+strlen(path);
 }
 
