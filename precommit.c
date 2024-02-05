@@ -95,6 +95,9 @@ int static_error_check(char *path, char *real_path){
             strcnct(command, "g++ ", path);
         else 
             strcnct(command, "gcc ", path);
+        strcnct(command, command, " -o ");
+        strcnct(command, command, repo_path);
+        strcnct(command, command, "/tmp-cmp.exe");
         strcnct(command, command, " -w 2> ");
         strcnct(command, command, repo_path);
         strcnct(command, command, "/tmp-cmp-err");
@@ -102,7 +105,8 @@ int static_error_check(char *path, char *real_path){
         FILE *f=fopen(cnct(repo_path, "/tmp-cmp-err"), "r");
         if(getc(f) != EOF) ret = 2; 
         fclose(f);
-        remove(cnct(repo_path, "/tmp-cmp-err"));
+        delete(cnct(repo_path, "/tmp-cmp-err"));
+        delete(cnct(repo_path, "/tmp-cmp.exe"));
         if(should_rem) remove(path);
     }
     else ret = 3;
