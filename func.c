@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <ctype.h>
 #include "errno.h"
 #define MAX_ADR_NAME 1000
 #define MAX_NME_LNG 100
@@ -63,6 +64,20 @@ int is_dir(const char *path){
         return 1;
     }
     return 0;
+}
+
+char *frmt(char *path){
+    int x=strlen(path);
+    while(x>0){
+        if(path[x]=='.')
+            break;
+        if(path[x]=='/')
+            break;
+        --x;
+    }
+    if(path[x]=='.')
+        return path+x;
+    return path+strlen(path);
 }
 
 int contains_line(char *path, const char *str){

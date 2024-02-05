@@ -21,5 +21,6 @@ int main(int argc, char *argv[]){
     else if(strcmp(argv[1], "checkout") == 0) return checkout(argc, argv);
     else if(strcmp(argv[1], "reset") == 0) return reset(argc, argv);
     else if(strcmp(argv[1], "tag") == 0) return tag_opr(argc, argv);
+    else if(strcmp(argv[1], "pre-commit") == 0) return precommit(argc, argv);
     else return cmd_err();
 }

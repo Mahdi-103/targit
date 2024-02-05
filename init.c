@@ -1,4 +1,4 @@
-#include "revert.c"
+#include "precommit.c"
 
 int init(){
     if(where_is_inited() != NULL){
@@ -12,6 +12,7 @@ int init(){
     init_conf(dir_adr);
     if(mkdir("tags", 0755) != 0) return 1;
     if(mkdir("stage", 0755) != 0) return 1;
+    if(mkdir("Hooks", 0755) != 0) return 1;
     if(mkdir("commits", 0755) != 0) return 1;
     if(mkdir("branches", 0755) != 0) return 1;
     if(mkdir("shortcuts", 0755) != 0) return 1;
@@ -33,6 +34,34 @@ int init(){
     fclose(f);
     f=fopen("branches/master/HEAD", "w");
     fprintf(f, "-1");
+    fclose(f);
+    chdir("Hooks");
+    f=fopen("todo-check", "w");
+    fprintf(f, "OFF");
+    fclose(f);
+    f=fopen("eof-blank-space", "w");
+    fprintf(f, "OFF");
+    fclose(f);
+    f=fopen("format-check", "w");
+    fprintf(f, "OFF");
+    fclose(f);
+    f=fopen("balance-braces", "w");
+    fprintf(f, "OFF");
+    fclose(f);
+    f=fopen("indentation-check", "w");
+    fprintf(f, "OFF");
+    fclose(f);
+    f=fopen("static-error-check", "w");
+    fprintf(f, "OFF");
+    fclose(f);
+    f=fopen("file-size-check", "w");
+    fprintf(f, "OFF");
+    fclose(f);
+    f=fopen("character-limit", "w");
+    fprintf(f, "OFF");
+    fclose(f);
+    f=fopen("time-limit", "w");
+    fprintf(f, "OFF");
     fclose(f);
     chdir("..");
     printf("The repo initialized successfully\n");
