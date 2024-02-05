@@ -2,11 +2,10 @@
 char res_hook_check[10000];
 #define rhc res_hook_check+strlen(res_hook_check)
 
-int todo_check(char *path){
+int todo_check(char *path, char *real_path){
     int ret = 0;
     FILE *f=fopen(path, "r");
-    char *ff=frmt(path);
-    printf("wtf :: %s\n", ff);
+    char *ff=frmt(real_path);
     if(strcmp(ff, "txt") == 0){
         char ln[10000];
         while(fgetS(ln, 10000, f) != NULL){
@@ -20,7 +19,7 @@ int todo_check(char *path){
         char ln[10000];
         while(fgetS(ln, 10000, f) != NULL){
             int slsh=0;
-            while(slsh<strlen(ln)-1){
+            while(slsh<(int)(strlen(ln)-1)){
                 if(ln[slsh] == '/' && ln[slsh+1] == '/')
                     break;
                 ++slsh;
@@ -36,10 +35,10 @@ int todo_check(char *path){
     return ret;// 0 if pass, 2 if fail, 3 if skip
 }
 
-int eof_blank_space(char *path){
+int eof_blank_space(char *path, char *real_path){
     int ret = 0;
     FILE *f=fopen(path, "r");
-    char *ff=frmt(path);
+    char *ff=frmt(real_path);
     if(strcmp(ff, "txt") == 0 || strcmp(ff, "cpp") == 0 || strcmp(ff, "c") == 0){
         char ch1='\0', ch0='\0';
         while((ch1 = getc(f)) != EOF)
@@ -51,20 +50,20 @@ int eof_blank_space(char *path){
     return ret;// 0 if pass, 2 if fail, 3 if skip
 }
 
-int format_check(char *path){
+int format_check(char *path, char *real_path){
     return 3;
 }
 
-int balance_braces(char *path){
+int balance_braces(char *path, char *real_path){
     int ret = 0;
     FILE *f=fopen(path, "r");
-    char *ff=frmt(path);
+    char *ff=frmt(real_path);
     if(strcmp(ff, "txt") == 0 || strcmp(ff, "cpp") == 0 || strcmp(ff, "c") == 0){
         char ch, st[10000];
         int sz=0;
         while((ch = getc(f)) != EOF){
             if(strchr("()[]{}", ch) != NULL){
-                if(sz == 0 || ch == st[sz-1] || abs(ch - st[sz-1]) >= 3){
+                if(sz == 0 || (ch - st[sz-1] != 2 && ch - st[sz-1] != 1)){
                     st[sz] = ch;
                     ++sz;
                 }
@@ -78,15 +77,20 @@ int balance_braces(char *path){
     return ret;// 0 if pass, 2 if fail, 3 if skip
 }
 
-int indentation_check(char *path){
+int indentation_check(char *path, char *real_path){
     return 3;
 }
 
-int static_error_check(char *path){
+int static_error_check(char *path, char *real_path){
     int ret = 0;
-    char *ff=frmt(path);
+    char *ff=frmt(real_path);
     char command[2 * MAX_ADR_NAME];
+    int should_rem=0;
     if(strcmp(ff, "cpp") == 0 || strcmp(ff, "c") == 0){
+        if(strlen(frmt(path)) == 0){
+            flecpy_path(cnct(path, ff-1), path);
+            path = cnct(path, ff-1);
+        }
         if(strcmp(ff, "cpp") == 0)
             strcnct(command, "g++ ", path);
         else 
@@ -94,30 +98,30 @@ int static_error_check(char *path){
         strcnct(command, command, " -w 2> ");
         strcnct(command, command, repo_path);
         strcnct(command, command, "/tmp-cmp-err");
-        //char command = "gcc "path" -w 2> /dev/null";
         system(command);
         FILE *f=fopen(cnct(repo_path, "/tmp-cmp-err"), "r");
         if(getc(f) != EOF) ret = 2; 
         fclose(f);
         remove(cnct(repo_path, "/tmp-cmp-err"));
+        if(should_rem) remove(path);
     }
     else ret = 3;
     return ret;// 0 if pass, 2 if fail, 3 if skip
 }
 
-int file_size_check(char *path){
+int file_size_check(char *path, char *real_path){
     struct stat st;
     if(stat(path, &st) == 0){
-        if(st.st_size > 5 * 1024 * 1024 * 8L) return 2;
+        if(st.st_size > 5 * 1024 * 1024L) return 2;
         return 0;
     }
     return 1;
 }
 
-int character_limit(char *path){
+int character_limit(char *path, char *real_path){
     int ret = 0;
     FILE *f=fopen(path, "r");
-    char *ff=frmt(path);
+    char *ff=frmt(real_path);
     if(strcmp(ff, "cpp") == 0 || strcmp(ff, "c") == 0 || strcmp(ff, "txt") == 0){
         int num = 1;
         char ch;
@@ -130,9 +134,9 @@ int character_limit(char *path){
     return ret;// 0 if pass, 2 if fail, 3 if skip
 }
 
-int time_limit(char *path){
+int time_limit(char *path, char *real_path){
     int ret = 0;
-    char *ff=frmt(path);
+    char *ff=frmt(real_path);
     char command[MAX_ADR_NAME];
     if(strcmp(ff, "mp4") == 0 || strcmp(ff, "mp3") == 0 || strcmp(ff, "wav") == 0){
         strcnct(command, "ffprobe -v error -select_streams v:0 -show_entries stream=duration -of default=noprint_wrappers=1:nokey=1 \"", path);
@@ -202,45 +206,47 @@ void prnt_natije(char *prnt, char *hook_name, int ret){
     sprintf(prnt+1, "%s", hook_name);
     sprintf(prnt+strlen(prnt), "\"");
     char retr[20];
-    if(ret == 0) memcpy(retr, "PASSED", 7);
-    else if(ret == 2) memcpy(retr, "FAILED", 7);
-    else if(ret == 3) memcpy(retr, "SKIPPED", 8);
-    for(int i = strlen(hook_name) + strlen(retr) ; i < 81 ; ++i)
+    if(ret == 0) memcpy(retr, "\033[0;32mPASSED\033[0m", 18);
+    else if(ret == 2) memcpy(retr, "\033[0;31mFAILED\033[0m", 18);
+    else if(ret == 3) memcpy(retr, "\033[0;38mSKIPPED\033[0m", 19);
+    for(int i = strlen(hook_name) + strlen(retr) ; i < 84 ; ++i)
         sprintf(prnt+strlen(prnt), ".");
     sprintf(prnt+strlen(prnt), "%s\n", retr);
 }
 
-int hook_check(char *path, int stg){ //cwd is anywhere and path is not absolute
+int hook_check(char *path, char *real_path, int stg){ //cwd is anywhere and path is not absolute
     char abs_P[MAX_ADR_NAME], cwd[MAX_ADR_NAME];
     if(getcwd(cwd, MAX_ADR_NAME) == NULL) return 1;
     if(lst_hook(0, 0))  return 5;
     if((path = abs_path(abs_P, path)) == NULL) return 1;
+    if((real_path = abs_path(abs_P, real_path)) == NULL) return 1;
     if(access(path, F_OK) || is_dir(path)) return 2;
     if(!stg){
         if(!in_repo(path)) return 3;
         if(!is_staged(path)) return 4;
     }
+    if(is_staged(real_path)) path = real_path;
     chdir(repo_path);
     chdir("Hooks");
     memset(res_hook_check, 0, 10000);
     if(contains_line("todo-check", "ON"))
-        prnt_natije(rhc, "todo-check", todo_check(path));
+        prnt_natije(rhc, "todo-check", todo_check(path, real_path));
     if(contains_line("eof-blank-space", "ON"))
-        prnt_natije(rhc, "eof-blank-space", eof_blank_space(path));
+        prnt_natije(rhc, "eof-blank-space", eof_blank_space(path, real_path));
     if(contains_line("format-check", "ON"))
-        prnt_natije(rhc, "format-check", format_check(path));
+        prnt_natije(rhc, "format-check", format_check(path, real_path));
     if(contains_line("balance-braces", "ON"))
-        prnt_natije(rhc, "balance-braces", balance_braces(path));
+        prnt_natije(rhc, "balance-braces", balance_braces(path, real_path));
     if(contains_line("indentation-check", "ON"))
-        prnt_natije(rhc, "indentation-check", indentation_check(path));
+        prnt_natije(rhc, "indentation-check", indentation_check(path, real_path));
     if(contains_line("static-error-check", "ON"))
-        prnt_natije(rhc, "static-error-check", static_error_check(path));
+        prnt_natije(rhc, "static-error-check", static_error_check(path, real_path));
     if(contains_line("file-size-check", "ON"))
-        prnt_natije(rhc, "file-size-check", file_size_check(path));
+        prnt_natije(rhc, "file-size-check", file_size_check(path, real_path));
     if(contains_line("character-limit", "ON"))
-        prnt_natije(rhc, "character-limit", character_limit(path));
+        prnt_natije(rhc, "character-limit", character_limit(path, real_path));
     if(contains_line("time-limit", "ON"))
-        prnt_natije(rhc, "time-limit", time_limit(path));
+        prnt_natije(rhc, "time-limit", time_limit(path, real_path));
     chdir(cwd);
     return 0; // 0 if ok, 2 if doesn't exit, 3 if out of repo, 4 if not staged
 }
@@ -266,12 +272,12 @@ int precommit(int argc, char *argv[]){
         while((entry = readdir(dir)) != NULL){
             if(is_ok_dir(entry->d_name)){
                 chdir(entry->d_name);
-                hook_check("file", 1);
+                char path_repo[MAX_ADR_NAME];
+                FILE *f=fopen("file_path", "r");
+                fgetS(path_repo, MAX_ADR_NAME, f);
+                fclose(f);
+                hook_check("file", path_repo, 1);
                 if(strlen(res_hook_check)){
-                    char path_repo[MAX_ADR_NAME];
-                    FILE *f=fopen("file_path", "r");
-                    fgetS(path_repo, MAX_ADR_NAME, f);
-                    fclose(f);
                     printf("\"%s\":\n%s\n", path_repo+strlen(repo_path)-7, res_hook_check);
                 }
                 chdir("..");
@@ -325,7 +331,7 @@ int precommit(int argc, char *argv[]){
             return 0;
         }
         for(int i = 3 ; i < argc ; ++i){
-            retr = hook_check(argv[i], 0);
+            retr = hook_check(argv[i], argv[i], 0);
             if(retr == 0)
                 printf("\"%s\":\n%s\n", argv[i], res_hook_check);
             else if(retr == 2)
@@ -337,6 +343,10 @@ int precommit(int argc, char *argv[]){
             else
                 exit(1);
         }
+        return 0;
+    }
+    else{
+        printf("Invalid command\n");
         return 0;
     }
     if(retr == 0)
