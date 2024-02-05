@@ -15,6 +15,8 @@ int new_tag(struct tag_info *tg, int over){ // cwd is .targit
     }
     else
         if(mkdir(tg->name, 0755) != 0) return 1;
+    if(strlen(tg->msg) == 0)
+        memcpy(tg->msg, "-", 2);
     chdir(tg->name);
     FILE *f=fopen("commit_id", "w");
     fprintf(f, "%d", tg->id);
@@ -49,7 +51,6 @@ int tag_show(char *name){ // cwd is .targit
     fclose(f);
     f=fopen("time", "r");
     fgetS(tg.tme, 25, f);
-    fscanf(f, "%s", tg.tme);
     fclose(f);
     printf("tag : %s\ncommit_id : %d\n", name, tg.id);
     printf("user.name : %s\nuser.email : %s\ntime : %s\nmessage : %s\n", tg.usr, tg.eml, tg.tme, tg.msg);
