@@ -1,4 +1,6 @@
 #include "tag.c"
+char res_hook_check[10000];
+#define rhc res_hook_check+strlen(res_hook_check)
 
 int todo_check(char *path){
     if(0 == NULL) printf("%d", 1/0);
@@ -112,7 +114,7 @@ int file_size_check(char *path){
     return 1;
 }
 
-int charecter_limit(char *path){
+int character_limit(char *path){
     int ret = 0;
     FILE *f=fopen(path, "r");
     char *ff=frmt(path);
@@ -186,10 +188,48 @@ int lst_hook(int all){ //cwd is .targitc
     return 0;
 }
 
-int hook_check(char *path){
+void prnt_natije(char *prnt, char *hook_name, int ret){
+    sprintf(prnt, "\"");
+    sprintf(prnt+1, hook_name);
+    sprintf(prnt+strlen(prnt), "\"");
+    char retr[20];
+    if(ret == 0) memcpy(retr, "PASSED", 7);
+    else if(ret == 2) memcpy(retr, "FAILED", 7);
+    else if(ret == 3) memcpy(retr, "SKIPPED", 8);
+    for(int i = strlen(hook_name) + strlen(retr) ; i < 81 ; ++i)
+        sprintf(prnt+strlen(prnt), ".");
+    sprintf(prnt+strlen(prnt), "%s\n", retr);
+}
+
+int hook_check(char *path, int stg){ // path is not absolute
+    char abs_P[MAX_ADR_NAME];
+    if((path = abs_path(abs_P, path)) == NULL) return 1;
     if(access(path, F_OK)) return 2;
-    else if(!is_staged(path)) return 3;
-    
+    if(!stg){
+        if(!in_repo(path)) return 3;
+        if(!is_staged(path)) return 4;
+    }
+    chdir("Hooks");
+    memset(res_hook_check, 0, 10000);
+    if(contains_line("todo-check", "ON"))
+        prnt_natije(rhc, "todo-check", todo_check(path));
+    if(contains_line("eof-blank-space", "ON"))
+        prnt_natije(rhc, "eof-blank-space", eof_blank_space(path));
+    if(contains_line("format-check", "ON"))
+        prnt_natije(rhc, "format-check", format_check(path));
+    if(contains_line("balance-braces", "ON"))
+        prnt_natije(rhc, "balance-braces", balance_braces(path));
+    if(contains_line("indentation-check", "ON"))
+        prnt_natije(rhc, "indentation-check", indentation_check(path));
+    if(contains_line("static-error-check", "ON"))
+        prnt_natije(rhc, "static-error-check", static_error_check(path));
+    if(contains_line("file-size-check", "ON"))
+        prnt_natije(rhc, "file-size-check", file_size_check(path));
+    if(contains_line("charater-limit", "ON"))
+        prnt_natije(rhc, "character-limit", character_limit(path));
+    if(contains_line("time-limit", "ON"))
+        prnt_natije(rhc, "time-limit", time_limit(path));
+    return 0;
 }
 
 int precommit(int argc, char *argv[]){
