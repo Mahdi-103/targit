@@ -1,4 +1,4 @@
-#include "precommit.c"
+#include "diff.c"
 
 int init(){
     if(where_is_inited() != NULL){
