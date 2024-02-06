@@ -146,6 +146,27 @@ int show_log(int argc, char *argv[]){ // cwd is .targit
         chdir("..");
         return 0;
     }
+    else if(strcmp(argv[2], "-search") == 0){
+        if(argc < 4){
+            printf("Please enter the word\n");
+            return 1;
+        }
+        if(argc > 4){
+            printf("If you want to search a word with spaces use double qoutations\n");
+            return 1;
+        }
+        chdir("commits");
+        for(int i=n;i>=0;--i){
+            char msg[80];
+            FILE *f=fopen(cnct(itos(i), "/message"), "r");
+            fgetS(msg, 80, f);
+            fclose(f);
+            if(strstr(msg, argv[3]) != NULL)
+                log_commit(itos(i));
+        }
+        chdir("..");
+        return 0;
+    }
     return 2; // 0 if ok, 2 if invalid, 3 if not "", 4 if wrong branch, 5 if wrong date
 }
 
