@@ -1,4 +1,4 @@
-#include "diff.c"
+#include "grep.c"
 
 int init(){
     if(where_is_inited() != NULL){
