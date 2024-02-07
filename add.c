@@ -112,15 +112,11 @@ int add_dir_fle_opr(char *path){ // cwd should be .targit and path is absolute
     FILE *t=fopen("tracked", "r");
     char tmp_path[MAX_ADR_NAME];
     int ok=0, res=2;
-    int z = 0;
     while(fgetS(tmp_path, MAX_ADR_NAME, t) != NULL){
         if(strncmp(tmp_path, path, strlen(path)) == 0){
             res=add_file_opr(tmp_path);
             ok=(strlen(tmp_path)==strlen(path));
         }
-        ++z;
-        if(z == 10)
-        exit(1);
     }
     fclose(t);
     if(ok) return res;

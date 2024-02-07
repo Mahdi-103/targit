@@ -406,8 +406,10 @@ char file_status(const char *path){
         chdir("../..");
     }while(strcmp(commit_id, "-1"));
     chdir(cwd);
-    if(res == -1)
-        exit(1);
+    if(res == -1){
+        if(access(path, F_OK) == 0) return 'A';
+        return '\0';
+    }
     if(res == 1)
         return 'M';
     if(res == 2)

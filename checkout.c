@@ -105,7 +105,7 @@ int checkout_opr(int argc, char *argv[]){ // cwd must be .targit
         chdir("../..");
         for(int i=0;i<n;++i){
             id=par_com(id);
-            if(id == lst_id && i < n-1)
+            if((id == lst_id && i < n-1) || (id == -1))
                 return 5;
         }
         return go_to(id);
@@ -142,6 +142,6 @@ int checkout(int argc, char *argv[]){
     else if(retr == 4)
         printf("There is no commit id nor branch name as %s\n", argv[2]);
     else if(retr == 5)
-        printf("The head doesn't have as much as n parents in its branch");
+        printf("The head doesn't have as much as n parents in its branch\n");
     return retr;
 }

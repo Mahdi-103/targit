@@ -219,11 +219,11 @@ void prnt_natije(char *prnt, char *hook_name, int ret){
 }
 
 int hook_check(char *path, char *real_path, int stg){ //cwd is anywhere and path is not absolute
-    char abs_P[MAX_ADR_NAME], cwd[MAX_ADR_NAME];
+    char abs_P[MAX_ADR_NAME], abs_P_r[MAX_ADR_NAME], cwd[MAX_ADR_NAME];
     if(getcwd(cwd, MAX_ADR_NAME) == NULL) return 1;
     if(lst_hook(0, 0))  return 5;
     if((path = abs_path(abs_P, path)) == NULL) return 1;
-    if((real_path = abs_path(abs_P, real_path)) == NULL) return 1;
+    if((real_path = abs_path(abs_P_r, real_path)) == NULL) return 1;
     if(access(path, F_OK) || is_dir(path)) return 2;
     if(!stg){
         if(!in_repo(path)) return 3;

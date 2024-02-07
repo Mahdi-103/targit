@@ -81,6 +81,10 @@ struct commit_info *commit_opr(int argc, char *argv[]){ // cwd is .targit
         ret.ret_val=2;
         return &ret;
     }
+    if(strcmp(argv[2], "-s") && strcmp(argv[2], "-m")){
+        ret.ret_val = 6;
+        return &ret;
+    }
     if(argc>4){
         ret.ret_val=3;
         return &ret;
@@ -151,6 +155,8 @@ int commit(int argc, char *argv[]){
             printf("The message is too long\nIt should be at most 72 characters\n");
         else if(retr->ret_val == 5)
             printf("There is no staged changes to be commited\n");
+        else if(retr->ret_val == 6)
+            printf("Invalid command\n");
         else if(retr->ret_val == -1)
             printf("There is no shortcut as %s\n", argv[3]);
         chdir(cwd);
