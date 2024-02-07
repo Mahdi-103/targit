@@ -11,6 +11,9 @@ int stage_empty(){ // cwd must be .targit
 }
 
 int add_file_opr(char *path){ // cwd should be .targit and path is absolute
+    if(access(path, F_OK)){
+        return 0;
+    }
     FILE *f=fopen(path, "r");
     DIR *dir=opendir("stage");
     struct dirent *entry;    

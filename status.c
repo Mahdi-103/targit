@@ -29,10 +29,12 @@ int show_status(int argc, char *argv[]){
         return 1;
     }
     char cwd[MAX_ADR_NAME];
-    if(argc==2)
+    if(argc==2){
         if(getcwd(cwd, MAX_ADR_NAME) == NULL) return 1;
-    else
+    }
+    else{
         abs_path(cwd, cnct(repo_path, "/.."));
+    }
     status_here(cwd);
     return 0;
 }
