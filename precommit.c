@@ -51,6 +51,11 @@ int eof_blank_space(char *path, char *real_path){
 }
 
 int format_check(char *path, char *real_path){
+    char *ff=frmt(real_path);
+    if(strlen(ff) == 0) return 3;
+    if(strcmp(ff, "c") && strcmp(ff, "cpp") && strcmp(ff, "txt") && strcmp(ff, "mp3") && strcmp(ff, "mp4") && strcmp(ff, "wav") && strcmp(ff, "py"))
+        return 2;
+    else return 0;
     return 3;
 }
 
